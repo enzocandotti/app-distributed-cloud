@@ -463,10 +463,11 @@ system helm-override-update distributed-cloud dcorch distributed-cloud --values 
 
 system helm-override-show distributed-cloud dcmanager distributed-cloud
 system helm-override-show distributed-cloud dcorch distributed-cloud
-
+```
 # Possible issue with ceph-pool-kube-rbd secret
+```bash
 kubectl create secret generic ceph-pool-kube-rbd --namespace=kube-system
-
+```
 # Create system-local-ca secret
 ```bash
 
@@ -476,10 +477,13 @@ kubectl -n distributed-cloud create secret generic system-local-ca --from-file=c
 ```
 
 # Apply app-distributed-cloud
+```bash
 system application-apply distributed-cloud
 system application-show distributed-cloud
+```
 
 # To remove
+```bash
 system application-remove distributed-cloud
 system application-delete distributed-cloud
 ```
