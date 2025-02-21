@@ -1,0 +1,66 @@
+namespace: distributed-cloud
+
+nginx:
+  name: dc-vault-nginx
+  replicas: 1
+  image: nginx:stable-alpine
+  port: 8125
+  storageMountPath: /var/www/dc-vault
+  configMapName: dc-vault-nginx-config
+  node_selector_key: starlingx.io/distributed-cloud
+  node_selector_value: enabled
+  worker_connections: 1024
+  autoindex: "on"
+  autoindex_exact_size: "off"
+  autoindex_localtime: "on"
+
+service:
+  name: "dc-vault-nginx-service"
+  type: NodePort     # "ClusterIP" or "NodePort"
+  port: 8125
+  nodePort: 30080
+  externalPolicyLocal: false
+
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations: ""
+  hosts:
+    - host: controller-0-cluster-host
+      paths:
+        - path: /
+          pathType: Prefix
+    - host: controller-1-cluster-host
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+volume:
+  vault:
+    enabled: true
+    accessModes:
+      - ReadWriteMany
+    class_name: cephfs
+    size: 15Gi
+    name: dc-vault-dir
+    claimName: dc-vault-pvc
+    path: /opt/dc-vault
+  backup:
+    enabled: true
+    accessModes:
+      - ReadWriteMany
+    class_name: cephfs
+    size: 10Gi
+    name: dc-backup-dir
+    claimName: dc-backup-pvc
+    path: /opt/dc-vault/backups
+  platform:
+    name: platform-volume
+    enabled: true
+    accessModes:
+      - ReadWriteMany
+    claimName: platform-pvc
+    path: /opt/platform
+    size: 15Gi
+    volumeName: platform-pv

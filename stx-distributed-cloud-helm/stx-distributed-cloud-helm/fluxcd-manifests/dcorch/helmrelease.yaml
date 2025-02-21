@@ -1,0 +1,36 @@
+#
+# Copyright (c) 2024 Wind River Systems, Inc.
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+
+apiVersion: "helm.toolkit.fluxcd.io/v2beta1"
+kind: HelmRelease
+metadata:
+  name: dcorch
+  labels:
+    chart_group: dcorch
+spec:
+  releaseName: dcorch
+  chart:
+    spec:
+      chart: dcorch
+      version: 0.1.0
+      sourceRef:
+        kind: HelmRepository
+        name: stx-platform
+  interval: 1m
+  timeout: 30m
+  test:
+    enable: false
+  install:
+    disableHooks: false
+  upgrade:
+    disableHooks: false
+  valuesFrom:
+    - kind: Secret
+      name: dcorch-static-overrides
+      valuesKey: dcorch-static-overrides.yaml
+    - kind: Secret
+      name: dcorch-system-overrides
+      valuesKey: dcorch-system-overrides.yaml

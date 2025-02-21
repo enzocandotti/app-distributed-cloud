@@ -1,0 +1,13 @@
+{{/*
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+*/}}
+
+{{- if .Values.manifests.job_db_drop }}
+{{- $dbDropJob := dict "envAll" . "serviceName" "dcorch" -}}
+{{- if .Values.pod.tolerations.dcorch.enabled -}}
+{{- $_ := set $dbDropJob "tolerationsEnabled" true -}}
+{{- end -}}
+{{ $dbDropJob | include "helm-toolkit.manifests.job_db_drop_mysql" }}
+{{- end }}

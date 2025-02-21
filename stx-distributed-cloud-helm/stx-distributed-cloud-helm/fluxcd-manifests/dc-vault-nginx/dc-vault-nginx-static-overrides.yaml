@@ -1,0 +1,16 @@
+#
+# Copyright (c) 2024 Wind River Systems, Inc.
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+
+nginx:
+  replicas: 1
+  node_selector_key: starlingx.io/distributed-cloud
+  node_selector_value: enabled
+
+volume:
+  vault:
+    size: 20Gi
+  backup:
+    size: 15Gi

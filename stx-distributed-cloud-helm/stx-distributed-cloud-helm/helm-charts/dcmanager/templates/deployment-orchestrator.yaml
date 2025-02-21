@@ -1,0 +1,84 @@
+{{/*
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+*/}}
+
+{{- if .Values.manifests.deployment_orchestrator }}
+{{- $envAll := . }}
+
+{{- $mounts_dcmanager_orchestrator := .Values.pod.mounts.orchestrator.dcmanager }}
+{{- $mounts_dcmanager_orchestrator_init := .Values.pod.mounts.orchestrator.init_container }}
+
+{{- $serviceAccountName := "dcmanager-orchestrator" }}
+{{ tuple $envAll "orchestrator" $serviceAccountName | include "helm-toolkit.snippets.kubernetes_pod_rbac_serviceaccount" }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dcmanager-orchestrator
+  labels:
+{{ tuple $envAll "dcmanager" "orchestrator" | include "helm-toolkit.snippets.kubernetes_metadata_labels" | indent 4 }}
+spec:
+  {{- if not .Values.pod.autoscaling.enabled }}
+  replicas: {{ .Values.pod.replicas.orchestrator }}
+  {{- end }}
+  selector:
+    matchLabels:
+{{ tuple $envAll "dcmanager" "orchestrator" | include "helm-toolkit.snippets.kubernetes_metadata_labels" | indent 6 }}
+{{ tuple $envAll | include "helm-toolkit.snippets.kubernetes_upgrades_deployment" | indent 2 }}
+  template:
+    metadata:
+      {{- with .Values.pod.annotations.orchestrator }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+{{ tuple $envAll "dcmanager" "orchestrator" | include "helm-toolkit.snippets.kubernetes_metadata_labels" | indent 8 }}
+    spec:
+      serviceAccountName: {{ $serviceAccountName }}
+      initContainers:
+{{ tuple $envAll "orchestrator" $mounts_dcmanager_orchestrator_init | include "helm-toolkit.snippets.kubernetes_entrypoint_init_container" | indent 8 }}
+      containers:
+        - name: dcmanager
+{{ tuple $envAll $envAll.Values.pod.resources.orchestrator | include "helm-toolkit.snippets.kubernetes_resources" | indent 10 }}
+          envFrom:
+            - secretRef:
+                name: dcmanager-keystone-admin
+          volumeMounts:
+            - name: dcmanager-bin
+              mountPath: /tmp/dcmanager-orchestrator.sh
+              subPath: dcmanager-orchestrator.sh
+              readOnly: true
+            - name: dcmanager-etc
+              mountPath: /etc/dcmanager/dcmanager.conf
+              subPath: dcmanager.conf
+              readOnly: true
+            - name: dcmanager-etc
+              mountPath: /etc/dcmanager/logging.conf
+              subPath: logging.conf
+              readOnly: true
+{{ if $mounts_dcmanager_orchestrator.volumeMounts }}{{ toYaml $mounts_dcmanager_orchestrator.volumeMounts | indent 12 }}{{ end }}
+          command:
+            - /tmp/dcmanager-orchestrator.sh
+          image: "{{ .Values.images.tags.dcmanager }}"
+          imagePullPolicy: {{ .Values.images.pullPolicy }}
+{{ tuple $envAll "dcmanager" | include "helm-toolkit.snippets.kubernetes_image_pull_secrets" | indent 6 }}
+      nodeSelector:
+        {{ .Values.labels.dcmanager.node_selector_key }}: {{ .Values.labels.dcmanager.node_selector_value }}
+{{ if $envAll.Values.pod.tolerations.dcmanager.enabled }}
+{{ tuple $envAll "dcmanager" | include "helm-toolkit.snippets.kubernetes_tolerations" | indent 6 }}
+{{ end }}
+      affinity:
+        {{ tuple $envAll "dcmanager" "orchestrator" | include "helm-toolkit.snippets.kubernetes_pod_anti_affinity" | indent 8 }}
+      volumes:
+        - name: dcmanager-etc
+          secret:
+            secretName: dcmanager-etc
+            defaultMode: 0644
+        - name: dcmanager-bin
+          configMap:
+            name: dcmanager-bin
+            defaultMode: 0755
+{{ if $mounts_dcmanager_orchestrator.volumes }}{{ toYaml $mounts_dcmanager_orchestrator.volumes | indent 8 }}{{ end }}
+{{- end }}

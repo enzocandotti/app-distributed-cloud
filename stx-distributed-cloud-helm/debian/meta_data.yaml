@@ -1,0 +1,6 @@
+---
+debname: stx-distributed-cloud-helm
+debver: 1.0-0
+src_path: stx-distributed-cloud-helm
+revision:
+  dist: $STX_DIST

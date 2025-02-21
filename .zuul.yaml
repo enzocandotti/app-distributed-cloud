@@ -1,0 +1,80 @@
+---
+- project:
+    vars:
+      ensure_tox_version: '<4'
+    check:
+      jobs:
+        - openstack-tox-linters
+        - k8sapp-distributed-cloud-tox-py39
+        - k8sapp-distributed-cloud-tox-flake8
+        - k8sapp-distributed-cloud-tox-pylint
+        - k8sapp-distributed-cloud-tox-bandit
+    gate:
+      jobs:
+        - openstack-tox-linters
+        - k8sapp-distributed-cloud-tox-py39
+        - k8sapp-distributed-cloud-tox-flake8
+        - k8sapp-distributed-cloud-tox-pylint
+        - k8sapp-distributed-cloud-tox-bandit
+
+- job:
+    name: k8sapp-distributed-cloud-tox-py39
+    parent: tox-py39
+    description: |
+      Run py39 for distributed-cloud app
+    nodeset: debian-bullseye
+    required-projects:
+      - starlingx/config
+      - starlingx/fault
+      - starlingx/root
+      - starlingx/update
+      - starlingx/utilities
+    files:
+      - python3-k8sapp-distributed-cloud/*
+    vars:
+      tox_envlist: py39
+      tox_extra_args: -c python3-k8sapp-distributed-cloud/k8sapp_distributed_cloud/tox.ini
+      tox_constraints_file: '{{ ansible_user_dir }}/src/opendev.org/starlingx/root/build-tools/requirements/debian/upper-constraints.txt'
+
+- job:
+    name: k8sapp-distributed-cloud-tox-flake8
+    parent: tox
+    description: |
+        Run flake8 for distributed-cloud
+    nodeset: debian-bullseye
+    files:
+      - python3-k8sapp-distributed-cloud/*
+    vars:
+        tox_envlist: flake8
+        tox_extra_args: -c python3-k8sapp-distributed-cloud/k8sapp_distributed_cloud/tox.ini
+
+- job:
+    name: k8sapp-distributed-cloud-tox-pylint
+    parent: tox
+    description: |
+      Run pylint test for k8sapp_distributed_cloud
+    required-projects:
+      - starlingx/config
+      - starlingx/fault
+      - starlingx/root
+      - starlingx/update
+      - starlingx/utilities
+    nodeset: debian-bullseye
+    files:
+      - python3-k8sapp-distributed-cloud/*
+    vars:
+      tox_envlist: pylint
+      tox_extra_args: -c python3-k8sapp-distributed-cloud/k8sapp_distributed_cloud/tox.ini
+      tox_constraints_file: '{{ ansible_user_dir }}/src/opendev.org/starlingx/root/build-tools/requirements/debian/upper-constraints.txt'
+
+- job:
+    name: k8sapp-distributed-cloud-tox-bandit
+    parent: tox
+    description: |
+        Run bandit for distributed-cloud
+    nodeset: debian-bullseye
+    files:
+      - python3-k8sapp-distributed-cloud/*
+    vars:
+        tox_envlist: bandit
+        tox_extra_args: -c python3-k8sapp-distributed-cloud/k8sapp_distributed_cloud/tox.ini

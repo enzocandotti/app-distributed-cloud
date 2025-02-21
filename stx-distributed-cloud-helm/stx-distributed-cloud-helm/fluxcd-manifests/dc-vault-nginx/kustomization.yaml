@@ -1,0 +1,18 @@
+#
+# Copyright (c) 2024 Wind River Systems, Inc.
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+
+namespace: distributed-cloud
+resources:
+  - helmrelease.yaml
+secretGenerator:
+  - name: dc-vault-nginx-static-overrides
+    files:
+      - dc-vault-nginx-static-overrides.yaml
+  - name: dc-vault-nginx-system-overrides
+    files:
+      - dc-vault-nginx-system-overrides.yaml
+generatorOptions:
+  disableNameSuffixHash: true

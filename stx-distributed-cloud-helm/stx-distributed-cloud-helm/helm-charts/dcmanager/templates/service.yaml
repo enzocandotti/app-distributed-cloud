@@ -1,0 +1,29 @@
+{{/*
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+*/}}
+
+{{- if .Values.manifests.service_dcmanager }}
+{{- $envAll := . }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ tuple "dcmanager" "internal" . | include "helm-toolkit.endpoints.hostname_short_endpoint_lookup" }}
+spec:
+  ports:
+  - name: dcmanger-port
+    port: {{ .Values.network.dcmanager.port }}
+    {{ if .Values.network.dcmanager.node_port.enabled }}
+    nodePort: {{ .Values.network.dcmanager.node_port.port }}
+    {{ end }}
+  selector:
+{{ tuple $envAll "dcmanager" "api" | include "helm-toolkit.snippets.kubernetes_metadata_labels" | indent 4 }}
+  {{ if .Values.network.dcmanager.node_port.enabled }}
+  type: NodePort
+  {{ if .Values.network.dcmanager.external_policy_local }}
+  externalTrafficPolicy: Local
+  {{ end }}
+  {{ end }}
+{{- end }}

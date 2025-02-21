@@ -1,0 +1,62 @@
+{{- if .Values.volume.vault.enabled }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ .Values.volume.vault.claimName }}
+  namespace: {{ .Values.namespace }}
+spec:
+  accessModes: {{ .Values.volume.vault.accessModes | toYaml | nindent 2 }}
+  resources:
+    requests:
+      storage: {{ .Values.volume.vault.size }}
+  storageClassName: {{ .Values.volume.vault.class_name }}
+{{- end }}
+
+{{- if .Values.volume.backup.enabled }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ .Values.volume.backup.claimName }}
+  namespace: {{ .Values.namespace }}
+spec:
+  accessModes: {{ .Values.volume.backup.accessModes | toYaml | nindent 2 }}
+  resources:
+    requests:
+      storage: {{ .Values.volume.backup.size }}
+  storageClassName: {{ .Values.volume.backup.class_name }}
+{{- end }}
+
+{{- if .Values.volume.platform.enabled }}
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: {{ .Values.volume.platform.volumeName }}
+spec:
+  capacity:
+    storage: {{ .Values.volume.platform.size }}
+  accessModes:
+    - {{ .Values.volume.platform.accessModes | join ", " }}
+  hostPath:
+    path: {{ .Values.volume.platform.path }}
+    type: DirectoryOrCreate
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: manual
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ .Values.volume.platform.claimName }}
+  namespace: {{ .Values.namespace }}
+spec:
+  accessModes:
+    - {{ .Values.volume.platform.accessModes | join ", " }}
+  resources:
+    requests:
+      storage: {{ .Values.volume.platform.size }}
+  volumeName: {{ .Values.volume.platform.volumeName }}
+  storageClassName: manual
+{{- end }}

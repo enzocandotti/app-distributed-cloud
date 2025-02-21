@@ -1,0 +1,5 @@
+python3-k8sapp-distributed-cloud (1.0-0) unstable; urgency=medium
+
+  * Initial release.
+
+ --  Matt Peters <matt.peters@windriver.com>  Fri, 12 Dec 2024 00:00:00 +0000

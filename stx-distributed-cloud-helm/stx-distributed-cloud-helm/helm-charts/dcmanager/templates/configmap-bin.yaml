@@ -1,0 +1,37 @@
+{{/*
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+*/}}
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dcmanager-bin
+data:
+  dcmanager-api.sh: |
+{{ tuple "bin/_dcmanager-api.sh.tpl" . | include "helm-toolkit.utils.template" | indent 4 }}
+  dcmanager-manager.sh: |
+{{ tuple "bin/_dcmanager-manager.sh.tpl" . | include "helm-toolkit.utils.template" | indent 4 }}
+  dcmanager-state.sh: |
+{{ tuple "bin/_dcmanager-state.sh.tpl" . | include "helm-toolkit.utils.template" | indent 4 }}
+  dcmanager-orchestrator.sh: |
+{{ tuple "bin/_dcmanager-orchestrator.sh.tpl" . | include "helm-toolkit.utils.template" | indent 4 }}
+  dcmanager-audit.sh: |
+{{ tuple "bin/_dcmanager-audit.sh.tpl" . | include "helm-toolkit.utils.template" | indent 4 }}
+  dcmanager-audit-worker.sh: |
+{{ tuple "bin/_dcmanager-audit-worker.sh.tpl" . | include "helm-toolkit.utils.template" | indent 4 }}
+  db-sync.sh: |
+{{ tuple "bin/_db-sync.sh.tpl" . | include "helm-toolkit.utils.template" | indent 4 }}
+  db-init.py: |
+{{- include "helm-toolkit.scripts.db_init" . | indent 4 }}
+  db-drop.sh: |
+{{ tuple "bin/_db-drop.sh.tpl" . | include "helm-toolkit.utils.template" | indent 4 }}
+  db-drop.py: |
+{{- include "helm-toolkit.scripts.db_drop" . | indent 4 }}
+  ks-service.sh: |
+{{- include "helm-toolkit.scripts.keystone_service" . | indent 4 }}
+  ks-endpoints.sh: |
+{{- include "helm-toolkit.scripts.keystone_endpoints" . | indent 4 }}
+  ks-user.sh: |
+{{- include "helm-toolkit.scripts.keystone_user" . | indent 4 }}

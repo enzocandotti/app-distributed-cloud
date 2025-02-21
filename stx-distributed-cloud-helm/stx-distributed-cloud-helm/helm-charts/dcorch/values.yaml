@@ -1,0 +1,688 @@
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+
+# Default values for dcorch.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+nameOverride: ""
+fullnameOverride: ""
+
+images:
+  tags:
+    dcorch: docker.io/starlingx/stx-distributed-cloud:master-debian-stable-latest
+    ks_user: docker.io/starlingx/stx-distributed-cloud:master-debian-stable-latest
+    ks_service: docker.io/starlingx/stx-distributed-cloud:master-debian-stable-latest
+    ks_endpoints: docker.io/starlingx/stx-distributed-cloud:master-debian-stable-latest
+    dcorch_db_sync: docker.io/starlingx/stx-distributed-cloud:master-debian-stable-latest
+    db_init: docker.io/starlingx/stx-distributed-cloud:master-debian-stable-latest
+    db_drop: docker.io/starlingx/stx-distributed-cloud:master-debian-stable-latest
+    rabbit_init: docker.io/rabbitmq:3.7-management
+    dep_check: quay.io/stackanetes/kubernetes-entrypoint:v0.3.1
+  pullPolicy: IfNotPresent
+  local_registry:
+    active: false
+
+service:
+  type: ClusterIP
+  port: 80
+
+labels:
+  dcorch:
+    node_selector_key: starlingx.io/distributed-cloud
+    node_selector_value: enabled
+  job:
+    node_selector_key: starlingx.io/distributed-cloud
+    node_selector_value: enabled
+
+imagePullSecrets: []
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Automatically mount a ServiceAccount's API credentials?
+  automount: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+podAnnotations: {}
+podLabels: {}
+
+podSecurityContext: {}
+  # fsGroup: 2000
+
+securityContext: {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+
+manifests:
+  certificates: false
+  configmap_bin: true
+  deployment_api: true
+  deployment_engine: true
+  deployment_api_proxy: true
+  ingress: true
+  job_ks_user: true
+  job_ks_service: true
+  job_ks_endpoints: true
+  job_db_init: false
+  job_db_sync: false
+  job_db_drop: false
+  job_rabbit_init: false
+  secret_etc: true
+  secret_db: true
+  secret_ingress_tls: false
+  secret_rabbitmq: true
+  secret_keystone: true
+  service_identity_api: true
+  service_patching_api: true
+  service_ingress: true
+  service_platform_api: true
+  service_usm_api: true
+  pvc_vault: true
+
+network:
+  identity:
+    ingress:
+      public: true
+      classes:
+        namespace: "nginx"
+        cluster: "nginx-cluster"
+      annotations:
+        nginx.ingress.kubernetes.io/rewrite-target: /
+    port: 25000
+    external_policy_local: false
+    node_port:
+      enabled: false
+      port: ""
+  patching:
+    ingress:
+      public: true
+      classes:
+        namespace: "nginx"
+        cluster: "nginx-cluster"
+      annotations:
+        nginx.ingress.kubernetes.io/rewrite-target: /
+    port: 25491
+    external_policy_local: false
+    node_port:
+      enabled: false
+      port: ""
+  platform:
+    ingress:
+      public: true
+      classes:
+        namespace: "nginx"
+        cluster: "nginx-cluster"
+      annotations:
+        nginx.ingress.kubernetes.io/rewrite-target: /
+    port: 26385
+    external_policy_local: false
+    node_port:
+      enabled: false
+      port: ""
+  usm:
+    ingress:
+      public: true
+      classes:
+        namespace: "nginx"
+        cluster: "nginx-cluster"
+      annotations:
+        nginx.ingress.kubernetes.io/rewrite-target: /
+    port: 25497
+    external_policy_local: false
+    node_port:
+      enabled: false
+      port: ""
+
+ingress:
+  enabled: false
+  annotations: {}
+  paths: []
+  hosts:
+    - dcorch-api
+  tls: []
+
+volume:
+  vault:
+    enabled: true
+    accessModes:
+      - ReadWriteMany
+    class_name: cephfs
+    size: 15Gi
+  backup:
+    enabled: false
+    accessModes:
+      - ReadWriteMany
+    class_name: cephfs
+    size: 10Gi
+
+
+conf:
+  dcorch:
+    DEFAULT:
+      DEBUG: True
+      use_syslog: True
+      syslog_log_facility: local4
+      # transport_url: "rabbit://guest:u6HoNk==X3F80_Sf@[fdff:719a:bf60:1152::2]:5672"
+      verbose: false
+      api_paste_config: /etc/dcorch/api-paste.ini
+      auth_strategy: keystone
+
+    database:
+      # connection: "postgresql+psycopg2://admin-dcorch:jnjY!FrX9+7kIGSd@[fdff:719a:bf60:1152::2]/dcorch"
+      connection_recycle_time: 3600
+      max_pool_size: 125
+      max_overflow: 75
+
+    keystone_authtoken:
+      auth_uri: http://controller.internal:5000
+      region_name: RegionOne
+      include_service_catalog: false
+      auth_type: password
+      interface: internal
+      auth_url: http://controller.internal:5000
+      project_name: services
+      username: dcorch
+      user_domain_name: Default
+      project_domain_name: Default
+
+    # compute:
+    #   bind_host: controller.internal
+      # bind_port: 28774
+    #   remote_host: controller.internal
+    #   remote_port: 18774
+
+    platform:
+    #   bind_host: controller.internal
+      bind_port: 26385
+    #   remote_host: controller.internal
+      remote_port: 6385
+
+    # volume:
+    #   bind_host: controller.internal
+      # bind_port: 28776
+    #   remote_host: controller.internal
+    #   remote_port: 8776
+
+    # network:
+    #   bind_host: controller.internal
+    #   bind_port: 29696
+    #   remote_host: controller.internal
+    #   remote_port: 9696
+
+    patching:
+    #   bind_host: controller.internal
+      bind_port: 25491
+    #   remote_host: 0.0.0.0
+      remote_port: 5491
+
+    usm:
+    #   bind_host: controller.internal
+      bind_port: 25497
+    #   remote_host: controller.internal
+      remote_port: 5497
+
+    identity:
+    #   bind_host: controller.internal
+      bind_port: 25000
+    #   remote_host: controller.internal
+      remote_port: 5000
+
+    cache:
+      auth_uri: http://controller.internal:5000/v3
+      admin_tenant: admin
+      admin_username: admin
+      # admin_password: "Li69nux*1234"
+
+    endpoint_cache:
+      auth_uri: http://controller.internal:5000/v3
+      auth_plugin: password
+      project_name: services
+      user_domain_name: Default
+      project_domain_name: Default
+      http_connect_timeout: 15
+      username: dcmanager
+      region_name: RegionOne
+
+    vault:
+      base_path: /opt/dc-vault
+    backup:
+      base_path: /opt/dc-vault/backups
+
+  logging:
+    loggers:
+      keys:
+        - root
+        - dcorch
+    handlers:
+      keys:
+        - stdout
+        - stderr
+        - "null"
+    formatters:
+      keys:
+        - context
+        - default
+    logger_root:
+      level: WARNING
+      handlers: 'null'
+    logger_dcorch:
+      level: INFO
+      handlers:
+        - stdout
+      qualname: dcorch
+    logger_eventletwsgi:
+      level: WARNING
+      handlers: stderr
+      qualname: eventlet.wsgi.server
+    logger_keystoneauth:
+      level: ERROR
+      handlers: stderr
+      qualname: keystoneauth
+    logger_sqlalchemy:
+      level: WARNING
+      handlers: stderr
+      qualname: sqlalchemy
+    handler_null:
+      class: logging.NullHandler
+      formatter: default
+      args: ()
+    handler_stdout:
+      class: StreamHandler
+      args: (sys.stdout,)
+      formatter: context
+    handler_stderr:
+      class: StreamHandler
+      args: (sys.stderr,)
+      formatter: context
+    formatter_context:
+      class: oslo_log.formatters.ContextFormatter
+    formatter_default:
+      format: "%(message)s"
+  api_paste:
+    content: |
+      [pipeline:dcorch-api-proxy]
+      pipeline=parser filter version authtoken acceptor proxyapp
+
+      [filter:parser]
+      paste.filter_factory=dcorch.api.proxy.apps.parser:ParseError.factory
+
+      [filter:filter]
+      paste.filter_factory=dcorch.api.proxy.apps.filter:ApiFiller.factory
+
+      [filter:version]
+      paste.filter_factory=dcorch.api.proxy.apps.acceptor:VersionAcceptor.factory
+
+      [filter:authtoken]
+      paste.filter_factory=keystonemiddleware.auth_token:filter_factory
+
+      [filter:acceptor]
+      paste.filter_factory=dcorch.api.proxy.apps.acceptor:Acceptor.factory
+
+      [app:proxyapp]
+      paste.app_factory=dcorch.api.proxy.apps.proxy:Proxy.factory
+
+dependencies:
+  static:
+    api:
+      jobs:
+        - dcorch-ks-user
+        - dcorch-ks-service
+        - dcorch-ks-endpoints
+    ks_endpoints:
+      jobs:
+        - dcorch-ks-user
+        - dcorch-ks-service
+    db_drop:
+      # services:
+      #  - endpoint: internal
+      #    service: oslo_db
+    db_init:
+      # services:
+      #  - endpoint: internal
+      #    service: oslo_db
+    db_sync:
+      # jobs:
+      #  - dcorch-db-init
+      # services:
+      #  - endpoint: internal
+      #    service: oslo_db
+    ks_service:
+      # services:
+      #  - endpoint: internal
+      #    service: identity
+    ks_user:
+      # services:
+      #  - endpoint: internal
+      #    service: identity
+    rabbit_init:
+      # services:
+      #  - endpoint: internal
+      #    service: oslo_messaging
+
+endpoints:
+  cluster_domain_suffix: cluster.local
+  oslo_db:
+    auth:
+      admin:
+        username: admin-dcorch
+        password: password
+      dcorch:
+        username: admin-dcorch
+        password: password
+      dcmanager:
+        username: admin-dcmanager
+        password: password
+    hosts:
+      default: postgresql
+    host_fqdn_override:
+      default: controller.internal
+    port:
+      postgresql:
+        default: 5432
+    path: /dcorch
+    scheme: postgresql+psycopg2
+  oslo_messaging:
+    auth:
+      admin:
+        username: admin
+        password: password
+      dcorch:
+        username: dcorch
+        password: password
+    hosts:
+      default: rabbitmq
+    host_fqdn_override:
+      default: controller.internal
+    path: /
+    scheme: rabbit
+    port:
+      amqp:
+        default: 5672
+      http:
+        default: 15672
+  identity:
+    name: keystone
+    auth:
+      admin:
+        username: admin
+        password: password
+        region_name: RegionOne
+        project_name: admin
+        user_domain_name: Default
+        project_domain_name: Default
+      dcorch:
+        role: admin
+        username: dcorch
+        password: password
+        region_name: RegionOne
+        project_name: services
+        user_domain_name: Default
+        project_domain_name: Default
+    hosts:
+      default: keystone-api
+      public: keystone
+    host_fqdn_override:
+      default: controller.internal
+    path:
+      default: /v3
+    scheme:
+      default: http
+    port:
+      api:
+        default: 80
+        internal: 5000
+  dcorch:
+    name: dcorch
+    hosts:
+      default: dcorch-api
+      public: dcorch
+    host_fqdn_override:
+      default: null
+    path:
+      default: /v1.0
+    scheme:
+      default: 'http'
+    port:
+      api:
+        default: 8118
+        public: 80
+
+  dcorch_identity_api:
+    hosts:
+      default: dcorch-identity-api
+      public: dcorch
+    host_fqdn_override:
+      default: null
+    path:
+      default: /v3
+    scheme:
+      default: 'http'
+    port:
+      api:
+        default: 25000
+  dcorch_patching_api:
+    hosts:
+      default: dcorch-patching-api
+      public: dcorch
+    host_fqdn_override:
+      default: null
+    path:
+      default: ""
+    scheme:
+      default: 'http'
+    port:
+      api:
+        default: 25491
+  dcorch_platform_api:
+    hosts:
+      default: dcorch-platform-api
+      public: dcorch
+    host_fqdn_override:
+      default: null
+    path:
+      default: /v1
+    scheme:
+      default: 'http'
+    port:
+      api:
+        default: 26385
+  dcorch_usm_api:
+    hosts:
+      default: dcorch-usm-api
+      public: dcorch
+    host_fqdn_override:
+      default: null
+    path:
+      default: ""
+    scheme:
+      default: 'http'
+    port:
+      api:
+        default: 25497
+
+pod:
+  probes:
+    api:
+      default:
+        liveness:
+          enabled: True
+          params:
+            initialDelaySeconds: 120
+            periodSeconds: 90
+            timeoutSeconds: 70
+  user:
+    api:
+      uid: 0
+  affinity:
+    anti:
+      type:
+        default: preferredDuringSchedulingIgnoredDuringExecution
+      topologyKey:
+        default: kubernetes.io/hostname
+  annotations: {}
+  tolerations:
+    dcorch:
+      enabled: false
+      tolerations:
+      - key: node-role.kubernetes.io/master
+        operator: Exists
+        effect: NoSchedule
+      - key: node-role.kubernetes.io/control-plane
+        operator: Exists
+        effect: NoSchedule
+  mounts:
+    api:
+      init_container: null
+      dcorch:
+    engine:
+      init_container: null
+      dcorch:
+    proxy:
+      init_container: null
+      dcorch:
+  autoscaling:
+    enabled: false
+  replicas:
+    api: 1
+    dcorch_engine: 1
+    dcorch_engine_worker: 7
+    dcorch_sysinv_api_proxy: 3
+    dcorch_identity_api_proxy: 3
+    dcorch_patch_api_proxy: 3
+    dcorch_usm_api_proxy: 3
+  lifecycle:
+    upgrades:
+      deployments:
+        revision_history: 3
+        pod_replacement_strategy: RollingUpdate
+        rolling_update:
+          max_unavailable: 1
+          max_surge: 3
+      daemonsets:
+        pod_replacement_strategy: RollingUpdate
+        compute:
+          enabled: true
+          min_ready_seconds: 0
+          max_unavailable: 1
+    disruption_budget:
+        dcorch:
+        min_available: 0
+    termination_grace_period:
+        dcorch:
+        timeout: 30
+  resources:
+    enabled: false
+    api:
+      requests:
+        memory: "128Mi"
+        cpu: "100m"
+      limits:
+        memory: "1024Mi"
+        cpu: "2000m"
+    dcorch_engine:
+      requests:
+        memory: "128Mi"
+        cpu: "100m"
+      limits:
+        memory: "1024Mi"
+        cpu: "2000m"
+    dcorch_engine_worker:
+      requests:
+        memory: "128Mi"
+        cpu: "100m"
+      limits:
+        memory: "1024Mi"
+        cpu: "2000m"
+    dcorch_sysinv_api_proxy:
+      requests:
+        memory: "128Mi"
+        cpu: "100m"
+      limits:
+        memory: "1024Mi"
+        cpu: "2000m"
+    dcorch_identity_api_proxy:
+      requests:
+        memory: "128Mi"
+        cpu: "100m"
+      limits:
+        memory: "1024Mi"
+        cpu: "2000m"
+    dcorch_patch_api_proxy:
+      requests:
+        memory: "128Mi"
+        cpu: "100m"
+      limits:
+        memory: "1024Mi"
+        cpu: "2000m"
+    dcorch_usm_api_proxy:
+      requests:
+        memory: "128Mi"
+        cpu: "100m"
+      limits:
+        memory: "1024Mi"
+        cpu: "2000m"
+    jobs:
+      ks_endpoints:
+        requests:
+          memory: "128Mi"
+          cpu: "100m"
+        limits:
+          memory: "1024Mi"
+          cpu: "2000m"
+      db_init:
+        requests:
+          memory: "128Mi"
+          cpu: "100m"
+        limits:
+          memory: "1024Mi"
+          cpu: "2000m"
+      db_sync:
+        requests:
+          memory: "128Mi"
+          cpu: "100m"
+        limits:
+          memory: "1024Mi"
+          cpu: "2000m"
+      db_drop:
+        requests:
+          memory: "128Mi"
+          cpu: "100m"
+        limits:
+          memory: "1024Mi"
+          cpu: "2000m"
+      rabbit_init:
+        requests:
+          memory: "128Mi"
+          cpu: "100m"
+        limits:
+          memory: "1024Mi"
+          cpu: "2000m"
+
+secrets:
+  caCertSecret: system-local-ca
+  identity:
+    admin: dcorch-keystone-admin
+    dcorch: dcorch-keystone-user
+    dcmanager: dcmanager-keystone-user
+  oslo_db:
+    admin: dcorch-db-admin
+    dcorch: dcorch-db-user
+    dcmanager: dcmanager-keystone-user
+  oslo_messaging:
+    admin: dcorch-rabbitmq-admin
+    dcorch: dcorch-rabbitmq-user
+  tls:
+    dcorch:
+      api:
+        public: dcorch-api-tls-public
+        internal: dcorch-api-tls-internal

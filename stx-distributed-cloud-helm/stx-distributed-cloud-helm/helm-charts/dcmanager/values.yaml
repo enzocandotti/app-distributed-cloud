@@ -1,0 +1,508 @@
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+
+# Default values for dcmanager.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+nameOverride: ""
+fullnameOverride: ""
+
+images:
+  tags:
+    dcmanager: docker.io/starlingx/stx-distributed-cloud:master-debian-stable-latest
+    ks_user: docker.io/starlingx/stx-distributed-cloud:master-debian-stable-latest
+    ks_service: docker.io/starlingx/stx-distributed-cloud:master-debian-stable-latest
+    ks_endpoints: docker.io/starlingx/stx-distributed-cloud:master-debian-stable-latest
+    dcmanager_db_sync: docker.io/starlingx/stx-distributed-cloud:master-debian-stable-latest
+    db_init: docker.io/starlingx/stx-distributed-cloud:master-debian-stable-latest
+    db_drop: docker.io/starlingx/stx-distributed-cloud:master-debian-stable-latest
+    rabbit_init: docker.io/rabbitmq:3.7-management
+    dep_check: quay.io/stackanetes/kubernetes-entrypoint:v0.3.1
+  pullPolicy: IfNotPresent
+  local_registry:
+    active: false
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Automatically mount a ServiceAccount's API credentials?
+  automount: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+labels:
+  dcmanager:
+    node_selector_key: starlingx.io/distributed-cloud
+    node_selector_value: enabled
+  job:
+    node_selector_key: starlingx.io/distributed-cloud
+    node_selector_value: enabled
+
+network:
+  dcmanager:
+    ingress:
+      public: true
+      classes:
+        namespace: "nginx"
+        cluster: "nginx-cluster"
+      annotations:
+        nginx.ingress.kubernetes.io/rewrite-target: /
+    port: 8119
+    node_port:
+      enabled: false
+      port: 30119
+    external_policy_local: false
+
+ingress:
+  enabled: false
+  annotations: {}
+  paths: []
+  hosts:
+    - dcmanager-api
+  tls: []
+
+volume:
+  vault:
+    enabled: true
+    accessModes:
+      - ReadWriteMany
+    class_name: cephfs
+    size: 15Gi
+  backup:
+    enabled: false
+    accessModes:
+      - ReadWriteMany
+    class_name: cephfs
+    size: 10Gi
+
+conf:
+  dcmanager:
+    DEFAULT:
+      log_config_append: /etc/dcmanager/logging.conf
+      auth_strategy: keystone
+      playbook_timeout: 3600
+      use_usm: False
+      workers: 1
+      orch_workers: 1
+      state_workers: 1
+      audit_workers: 1
+      audit_worker_workers: 1
+    database:
+      connection_recycle_time: 3600
+      max_pool_size: 105
+      max_overflow: 100
+    keystone_authtoken:
+      interface: internal
+      auth_uri: http://controller.internal:5000
+      auth_version: v3
+      auth_type: password
+      http_connect_timeout: 15
+      http_request_max_retries: 3
+      region_name: RegionOne
+      auth_url: http://controller.internal:5000
+      project_name: services
+      user_domain_name: Default
+      project_domain_name: Default
+    cache:
+      auth_uri: http://controller.internal:5000/v3
+      admin_tenant: admin
+    endpoint_cache:
+      region_name: RegionOne
+      auth_uri: http://controller.internal:5000/v3
+      auth_plugin: password
+      project_name: services
+      user_domain_name: Default
+      project_domain_name: Default
+      http_connect_timeout: 15
+    vault:
+      base_path: /opt/dc-vault
+    backup:
+      base_path: /opt/dc-vault/backups
+
+  logging:
+    loggers:
+      keys:
+        - root
+        - dcmanager
+    handlers:
+      keys:
+        - stdout
+        - stderr
+        - "null"
+    formatters:
+      keys:
+        - context
+        - default
+    logger_root:
+      level: WARNING
+      handlers: 'null'
+    logger_dcmanager:
+      level: INFO
+      handlers:
+        - stdout
+      qualname: dcmanager
+    logger_eventletwsgi:
+      level: WARNING
+      handlers: stderr
+      qualname: eventlet.wsgi.server
+    logger_keystoneauth:
+      level: ERROR
+      handlers: stderr
+      qualname: keystoneauth
+    logger_sqlalchemy:
+      level: WARNING
+      handlers: stderr
+      qualname: sqlalchemy
+    handler_null:
+      class: logging.NullHandler
+      formatter: default
+      args: ()
+    handler_stdout:
+      class: StreamHandler
+      args: (sys.stdout,)
+      formatter: context
+    handler_stderr:
+      class: StreamHandler
+      args: (sys.stderr,)
+      formatter: context
+    formatter_context:
+      class: oslo_log.formatters.ContextFormatter
+    formatter_default:
+      format: "%(message)s"
+
+dependencies:
+  static:
+    api:
+      jobs:
+        - dcmanager-ks-user
+        - dcmanager-ks-service
+        - dcmanager-ks-endpoints
+      #  - dcmanager-db-sync
+      # services:
+      #   - endpoint: internal
+      #     service: identity
+      #   - endpoint: internal
+      #     service: oslo_db
+      #   - endpoint: internal
+      #     service: oslo_messaging
+    ks_endpoints:
+      jobs:
+        - dcmanager-ks-user
+        - dcmanager-ks-service
+      # services:
+      #   - endpoint: internal
+      #     service: identity
+    db_drop:
+      # services:
+      #  - endpoint: internal
+      #    service: oslo_db
+    db_init:
+      # services:
+      #  - endpoint: internal
+      #    service: oslo_db
+    db_sync:
+      # jobs:
+      #  - dcmanager-db-init
+      # services:
+      #  - endpoint: internal
+      #    service: oslo_db
+    ks_service:
+      # services:
+      #  - endpoint: internal
+      #    service: identity
+    ks_user:
+      # services:
+      #  - endpoint: internal
+      #    service: identity
+    rabbit_init:
+      # services:
+      #  - endpoint: internal
+      #    service: oslo_messaging
+
+manifests:
+  certificates: false
+  configmap_bin: true
+  deployment_api: true
+  deployment_manager: true
+  deployment_audit: true
+  deployment_state: true
+  deployment_orchestrator: true
+  ingress: true
+  job_ks_user: true
+  job_ks_service: true
+  job_ks_endpoints: true
+  job_db_init: false
+  job_db_sync: false
+  job_db_drop: false
+  job_rabbit_init: false
+  secret_etc: true
+  secret_db: true
+  secret_ingress_tls: false
+  secret_rabbitmq: true
+  secret_keystone: true
+  service_dcmanager: true
+  service_ingress: true
+  pvc_vault: true
+
+endpoints:
+  cluster_domain_suffix: cluster.local
+  oslo_db:
+    auth:
+      admin:
+        username: admin
+        password: password
+      dcmanager:
+        username: dcmanager
+        password: password
+    hosts:
+      default: postgresql
+    host_fqdn_override:
+      default: controller.internal
+    port:
+      postgresql:
+        default: 5432
+    path: /dcmanager
+    scheme: postgresql+psycopg2
+  oslo_messaging:
+    auth:
+      admin:
+        username: admin
+        password: password
+      dcmanager:
+        username: dcmanager
+        password: password
+    hosts:
+      default: rabbitmq
+    host_fqdn_override:
+      default: controller.internal
+    path: /
+    scheme: rabbit
+    port:
+      amqp:
+        default: 5672
+      http:
+        default: 15672
+  identity:
+    name: keystone
+    auth:
+      admin:
+        username: admin
+        password: password
+        region_name: SystemController
+        project_name: admin
+        user_domain_name: Default
+        project_domain_name: Default
+      dcmanager:
+        role: admin
+        username: dcmanager
+        password: password
+        region_name: SystemController
+        project_name: services
+        user_domain_name: Default
+        project_domain_name: Default
+    hosts:
+      default: keystone-api
+      public: keystone
+    host_fqdn_override:
+      default: controller.internal
+    path:
+      default: /v3
+    scheme:
+      default: http
+    port:
+      api:
+        default: 5000
+        internal: 5000
+  dcmanager:
+    name: dcmanager
+    hosts:
+      default: dcmanager-api
+      public: dcmanager
+    host_fqdn_override:
+      default: null
+    path:
+      default: /v1.0
+    scheme:
+      default: 'http'
+    port:
+      api:
+        default: 8119
+        public: 80
+
+pod:
+  probes:
+    api:
+      default:
+        liveness:
+          enabled: True
+          params:
+            initialDelaySeconds: 120
+            periodSeconds: 90
+            timeoutSeconds: 70
+  user:
+    api:
+      uid: 0
+  affinity:
+    anti:
+      type:
+        default: preferredDuringSchedulingIgnoredDuringExecution
+      topologyKey:
+        default: kubernetes.io/hostname
+  annotations: {}
+  tolerations:
+    dcmanager:
+      enabled: false
+      tolerations:
+      - key: node-role.kubernetes.io/master
+        operator: Exists
+        effect: NoSchedule
+      - key: node-role.kubernetes.io/control-plane
+        operator: Exists
+        effect: NoSchedule
+  mounts:
+    api:
+      init_container: null
+      dcmanager:
+    manager:
+      init_container: null
+      dcmanager:
+    audit:
+      init_container: null
+      dcmanager:
+    state:
+      init_container: null
+      dcmanager:
+    orchestrator:
+      init_container: null
+      dcmanager:
+  autoscaling:
+    enabled: false
+  replicas:
+    api: 1
+    manager: 1
+    audit: 1
+    audit_worker: 5
+    state: 5
+    orchestrator: 1
+  lifecycle:
+    upgrades:
+      deployments:
+        revision_history: 3
+        pod_replacement_strategy: RollingUpdate
+        rolling_update:
+          max_unavailable: 1
+          max_surge: 3
+      daemonsets:
+        pod_replacement_strategy: RollingUpdate
+        compute:
+          enabled: true
+          min_ready_seconds: 0
+          max_unavailable: 1
+    disruption_budget:
+        dcmanager:
+        min_available: 0
+    termination_grace_period:
+        dcmanager:
+        timeout: 30
+  resources:
+    enabled: false
+    api:
+      requests:
+        memory: "128Mi"
+        cpu: "100m"
+      limits:
+        memory: "1024Mi"
+        cpu: "2000m"
+    manager:
+      requests:
+        memory: "128Mi"
+        cpu: "100m"
+      limits:
+        memory: "1024Mi"
+        cpu: "2000m"
+    state:
+      requests:
+        memory: "128Mi"
+        cpu: "100m"
+      limits:
+        memory: "1024Mi"
+        cpu: "2000m"
+    orchestrator:
+      requests:
+        memory: "128Mi"
+        cpu: "100m"
+      limits:
+        memory: "1024Mi"
+        cpu: "2000m"
+    audit:
+      requests:
+        memory: "128Mi"
+        cpu: "100m"
+      limits:
+        memory: "1024Mi"
+        cpu: "2000m"
+    audit_worker:
+      requests:
+        memory: "128Mi"
+        cpu: "100m"
+      limits:
+        memory: "1024Mi"
+        cpu: "2000m"
+    jobs:
+      ks_endpoints:
+        requests:
+          memory: "128Mi"
+          cpu: "100m"
+        limits:
+          memory: "1024Mi"
+          cpu: "2000m"
+      db_init:
+        requests:
+          memory: "128Mi"
+          cpu: "100m"
+        limits:
+          memory: "1024Mi"
+          cpu: "2000m"
+      db_sync:
+        requests:
+          memory: "128Mi"
+          cpu: "100m"
+        limits:
+          memory: "1024Mi"
+          cpu: "2000m"
+      db_drop:
+        requests:
+          memory: "128Mi"
+          cpu: "100m"
+        limits:
+          memory: "1024Mi"
+          cpu: "2000m"
+      rabbit_init:
+        requests:
+          memory: "128Mi"
+          cpu: "100m"
+        limits:
+          memory: "1024Mi"
+          cpu: "2000m"
+
+secrets:
+  caCertSecret: system-local-ca
+  identity:
+    admin: dcmanager-keystone-admin
+    dcmanager: dcmanager-keystone-user
+  oslo_db:
+    admin: dcmanager-db-admin
+    dcmanager: dcmanager-db-user
+  oslo_messaging:
+    admin: dcmanager-rabbitmq-admin
+    dcmanager: dcmanager-rabbitmq-user
+  tls:
+    dcmanager:
+      api:
+        public: dcmanager-api-tls-public
+        internal: dcmanager-api-tls-internal

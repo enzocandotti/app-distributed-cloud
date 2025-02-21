@@ -1,0 +1,19 @@
+# {{/*
+# #
+# # SPDX-License-Identifier: Apache-2.0
+# #
+# */}}
+
+# {{- if and .Values.volume.backup.enabled .Values.manifests.pvc_backup }}
+# ---
+# kind: PersistentVolumeClaim
+# apiVersion: v1
+# metadata:
+#   name: dc-backup-pvc
+# spec:
+#   accessModes: {{ .Values.volume.backup.accessModes }}
+#   resources:
+#     requests:
+#       storage: {{ .Values.volume.backup.size }}
+#   storageClassName: {{ .Values.volume.backup.class_name }}
+# {{- end }}

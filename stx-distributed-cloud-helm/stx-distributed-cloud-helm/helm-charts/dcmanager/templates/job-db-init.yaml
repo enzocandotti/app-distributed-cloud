@@ -1,0 +1,13 @@
+{{/*
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+*/}}
+
+{{- if .Values.manifests.job_db_init }}
+{{- $dbInitJob := dict "envAll" . "serviceName" "dcmanager" -}}
+{{- if .Values.pod.tolerations.dcmanager.enabled -}}
+{{- $_ := set $dbInitJob "tolerationsEnabled" true -}}
+{{- end -}}
+{{ $dbInitJob | include "helm-toolkit.manifests.job_db_init_mysql" }}
+{{- end }}

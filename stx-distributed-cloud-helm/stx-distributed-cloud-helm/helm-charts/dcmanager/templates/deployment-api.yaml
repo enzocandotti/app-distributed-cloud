@@ -1,0 +1,135 @@
+{{/*
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+*/}}
+
+{{- define "dcManagerApiLivenessProbeTemplate" }}
+tcpSocket:
+  port: {{ tuple "dcmanager" "internal" "api" . | include "helm-toolkit.endpoints.endpoint_port_lookup" }}
+{{- end }}
+
+{{- if .Values.manifests.deployment_api }}
+{{- $envAll := . }}
+
+{{- $mounts_dcmanager_api := .Values.pod.mounts.api.dcmanager }}
+{{- $mounts_dcmanager_api_init := .Values.pod.mounts.api.init_container }}
+
+{{- $serviceAccountName := "dcmanager" }}
+{{ tuple $envAll "api" $serviceAccountName | include "helm-toolkit.snippets.kubernetes_pod_rbac_serviceaccount" }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dcmanager-api
+  labels:
+{{ tuple $envAll "dcmanager" "api" | include "helm-toolkit.snippets.kubernetes_metadata_labels" | indent 4 }}
+spec:
+  {{- if not .Values.pod.autoscaling.enabled }}
+  replicas: {{ .Values.pod.replicas.api }}
+  {{- end }}
+  selector:
+    matchLabels:
+{{ tuple $envAll "dcmanager" "api" | include "helm-toolkit.snippets.kubernetes_metadata_labels" | indent 6 }}
+{{ tuple $envAll | include "helm-toolkit.snippets.kubernetes_upgrades_deployment" | indent 2 }}
+  template:
+    metadata:
+      {{- with .Values.pod.annotations.api }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+{{ tuple $envAll "dcmanager" "api" | include "helm-toolkit.snippets.kubernetes_metadata_labels" | indent 8 }}
+    spec:
+      serviceAccountName: {{ $serviceAccountName }}
+      initContainers:
+{{ tuple $envAll "api" $mounts_dcmanager_api_init | include "helm-toolkit.snippets.kubernetes_entrypoint_init_container" | indent 8 }}
+      containers:
+        - name: dcmanager
+{{ tuple $envAll $envAll.Values.pod.resources.api | include "helm-toolkit.snippets.kubernetes_resources" | indent 10 }}
+          env:
+          - name: SSL_CERT_FILE
+            value: /etc/ssl/certs/ca-certificates.crt
+          envFrom:
+            - secretRef:
+                name: dcmanager-keystone-admin
+          volumeMounts:
+            - name: dcmanager-bin
+              mountPath: /tmp/dcmanager-api.sh
+              subPath: dcmanager-api.sh
+              readOnly: true
+            - name: dcmanager-etc
+              mountPath: /etc/dcmanager/dcmanager.conf
+              subPath: dcmanager.conf
+              readOnly: true
+            - name: dcmanager-etc
+              mountPath: /etc/dcmanager/logging.conf
+              subPath: logging.conf
+              readOnly: true
+            - name: dc-vault-dir
+              mountPath: {{ .Values.conf.dcmanager.vault.base_path }}
+            - name: dc-backup-dir
+              mountPath: {{ .Values.conf.dcmanager.backup.base_path }}
+{{- if .Values.secrets.caCertSecret }}
+            - name: ca-certs
+              mountPath: /etc/pki/ca-trust/source/anchors/dcmanager-local-ca.crt
+              subPath: ca.crt
+              readOnly: true
+{{- end }}
+{{ if $mounts_dcmanager_api.volumeMounts }}{{ toYaml $mounts_dcmanager_api.volumeMounts | indent 12 }}{{ end }}
+{{- dict "enabled" .Values.manifests.certificates "name" .Values.secrets.tls.dcmanager.api.public | include "helm-toolkit.snippets.tls_volume_mount" | indent 12 }}
+{{ dict "envAll" . "component" "api" "container" "default" "type" "liveness" "probeTemplate" (include "dcManagerApiLivenessProbeTemplate" . | fromYaml) | include "helm-toolkit.snippets.kubernetes_probe" | indent 10 }}
+          command:
+            - /tmp/dcmanager-api.sh
+          image: "{{ .Values.images.tags.dcmanager }}"
+          imagePullPolicy: {{ .Values.images.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ tuple "dcmanager" "internal" "api" . | include "helm-toolkit.endpoints.endpoint_port_lookup" }}
+              protocol: TCP
+{{ tuple $envAll "dcmanager" | include "helm-toolkit.snippets.kubernetes_image_pull_secrets" | indent 6 }}
+      nodeSelector:
+        {{ .Values.labels.dcmanager.node_selector_key }}: {{ .Values.labels.dcmanager.node_selector_value }}
+{{ if $envAll.Values.pod.tolerations.dcmanager.enabled }}
+{{ tuple $envAll "dcmanager" | include "helm-toolkit.snippets.kubernetes_tolerations" | indent 6 }}
+{{ end }}
+      affinity:
+        {{ tuple $envAll "dcmanager" "api" | include "helm-toolkit.snippets.kubernetes_pod_anti_affinity" | indent 8 }}
+      volumes:
+        - name: dcmanager-etc
+          secret:
+            secretName: dcmanager-etc
+            defaultMode: 0644
+        - name: dcmanager-bin
+          configMap:
+            name: dcmanager-bin
+            defaultMode: 0755
+{{- if .Values.secrets.caCertSecret }}
+        - name: ca-certs
+          secret:
+            secretName: {{ .Values.secrets.caCertSecret }}
+            defaultMode: 0644
+{{- end }}
+        {{- if and .Values.volume.vault.enabled  .Values.manifests.pvc_vault }}
+        - name: dc-vault-dir
+          persistentVolumeClaim:
+            claimName: dc-vault-pvc
+        {{- else }}
+        - name: dc-vault-dir
+          hostPath:
+            path: {{ .Values.conf.dcmanager.vault.base_path }}
+            type: DirectoryOrCreate
+        {{- end }}
+        {{- if and .Values.volume.backup.enabled  .Values.manifests.pvc_backup }}
+        - name: dc-backup-dir
+          persistentVolumeClaim:
+            claimName: dc-backup-pvc
+        {{- else }}
+        - name: dc-backup-dir
+          hostPath:
+            path: {{ .Values.conf.dcmanager.backup.base_path }}
+            type: DirectoryOrCreate
+        {{- end }}
+{{ if $mounts_dcmanager_api.volumes }}{{ toYaml $mounts_dcmanager_api.volumes | indent 8 }}{{ end }}
+{{- dict "enabled" .Values.manifests.certificates "name" .Values.secrets.tls.dcmanager.api.public | include "helm-toolkit.snippets.tls_volume" | indent 8 }}
+{{- end }}

@@ -1,0 +1,33 @@
+#
+# Copyright (c) 2024 Wind River Systems, Inc.
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+
+pod:
+  image_pull_secrets:
+    default:
+      - name: default-registry-key
+  tolerations:
+    dcorch:
+      enabled: true
+
+endpoints:
+  oslo_db:
+    auth:
+      admin:
+        username: admin-dcorch
+      dcorch:
+        username: admin-dcorch
+  oslo_messaging:
+    auth:
+      admin:
+        username: guest
+      dcorch:
+        username: guest
+  identity:
+    auth:
+      admin:
+        username: admin
+      dcorch:
+        username: dcorch

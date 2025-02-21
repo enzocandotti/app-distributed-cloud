@@ -1,0 +1,16 @@
+{{/*
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+*/}}
+
+{{- if .Values.manifests.job_ks_user }}
+{{- $ksUserJob := dict "envAll" . "serviceName" "dcorch" -}}
+{{- if .Values.pod.tolerations.dcorch.enabled -}}
+{{- $_ := set $ksUserJob "tolerationsEnabled" true -}}
+{{- end -}}
+{{- if .Values.manifests.certificates -}}
+{{- $_ := set $ksUserJob "tlsSecret" .Values.secrets.tls.dcorch.api.public -}}
+{{- end -}}
+{{ $ksUserJob | include "helm-toolkit.manifests.job_ks_user" }}
+{{- end }}

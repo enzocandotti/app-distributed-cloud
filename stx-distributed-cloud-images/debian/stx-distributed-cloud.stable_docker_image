@@ -1,0 +1,60 @@
+BUILDER=loci
+LABEL=stx-distributed-cloud
+PROJECT=infra
+PROJECT_REPO=nil
+DIST_REPOS="OS"
+DIST_PACKAGES="
+        vim \
+        procps \
+        iputils-ping \
+        dnsutils \
+        curl \
+        openssl \
+        software \
+        software-client \
+        fm-common \
+        python3-gi \
+        "
+PIP_PACKAGES="
+        distributedcloud \
+        tsconfig \
+        cgcs-patch \
+        cgtsclient \
+        nfv_client \
+        fmclient \
+        fm-api \
+        eventlet \
+        pecan \
+        prettytable \
+        psutil \
+        lxml \
+        future \
+        retrying \
+        SQLAlchemy \
+        pycrypto \
+        psycopg2 \
+        oslo.concurrency \
+        oslo.config \
+        oslo.db \
+        oslo.log \
+        oslo.messaging \
+        oslo.middleware \
+        oslo.policy \
+        oslo.service \
+        oslo.versionedobjects \
+        keystonemiddleware \
+        keyring \
+        kubernetes \
+        httplib2 pyopenssl \
+        python-barbicanclient \
+        "
+# FIXME: override python modules enforced by https://github.com/openstack/requirements/upper-constraints.txt
+CUSTOMIZATION="\
+    mkdir -p /var/log/dcmanager/ansible && \
+    mkdir -p /var/log/dcorch && \
+    pip3 uninstall -y sqlalchemy && pip install 'sqlalchemy<1.4' && \
+    pip3 uninstall -y oslo.context && pip install 'oslo.context<4.0' && \
+    pip3 uninstall -y oslo.db && pip install 'oslo.db<9.0' && \
+    pip3 uninstall -y keystoneauth1 && \
+    pip3 uninstall -y python-keystoneclient \
+"

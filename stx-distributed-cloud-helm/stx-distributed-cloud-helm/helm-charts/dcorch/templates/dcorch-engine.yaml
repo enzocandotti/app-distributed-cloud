@@ -1,0 +1,99 @@
+{{/*
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+*/}}
+
+{{- if .Values.manifests.deployment_engine }}
+{{- $envAll := . }}
+
+{{- $mounts_dcorch_engine := .Values.pod.mounts.engine.dcorch }}
+{{- $mounts_dcorch_engine_init := .Values.pod.mounts.engine.init_container }}
+
+{{- $serviceAccountName := "dcorch-engine" }}
+{{ tuple $envAll "engine" $serviceAccountName | include "helm-toolkit.snippets.kubernetes_pod_rbac_serviceaccount" }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dcorch-engine
+  labels:
+{{ tuple $envAll "dcorch" "engine" | include "helm-toolkit.snippets.kubernetes_metadata_labels" | indent 4 }}
+spec:
+  {{- if not .Values.pod.autoscaling.enabled }}
+  replicas: {{ .Values.pod.replicas.dcorch_engine }}
+  {{- end }}
+  selector:
+    matchLabels:
+{{ tuple $envAll "dcorch" "engine" | include "helm-toolkit.snippets.kubernetes_metadata_labels" | indent 6 }}
+{{ tuple $envAll | include "helm-toolkit.snippets.kubernetes_upgrades_deployment" | indent 2 }}
+  template:
+    metadata:
+      {{- with .Values.pod.annotations.dcorch_engine }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+{{ tuple $envAll "dcorch" "engine" | include "helm-toolkit.snippets.kubernetes_metadata_labels" | indent 8 }}
+    spec:
+      serviceAccountName: {{ $serviceAccountName }}
+      initContainers:
+{{ tuple $envAll "engine" $mounts_dcorch_engine_init | include "helm-toolkit.snippets.kubernetes_entrypoint_init_container" | indent 8 }}
+      containers:
+        - name: dcorch
+{{ tuple $envAll $envAll.Values.pod.resources.dcorch_engine | include "helm-toolkit.snippets.kubernetes_resources" | indent 10 }}
+          env:
+          - name: SSL_CERT_FILE
+            value: /etc/ssl/certs/ca-certificates.crt
+          envFrom:
+            - secretRef:
+                name: dcorch-keystone-admin
+          volumeMounts:
+            - name: dcorch-bin
+              mountPath: /tmp/dcorch-engine.sh
+              subPath: dcorch-engine.sh
+              readOnly: true
+            - name: dcorch-etc
+              mountPath: /etc/dcorch/dcorch.conf
+              subPath: dcorch.conf
+              readOnly: true
+            - name: dcorch-etc
+              mountPath: /etc/dcorch/logging.conf
+              subPath: logging.conf
+              readOnly: true
+{{- if .Values.secrets.caCertSecret }}
+            - name: ca-certs
+              mountPath: /etc/pki/ca-trust/source/anchors/dcorch-local-ca.crt
+              subPath: ca.crt
+              readOnly: true
+{{- end }}
+{{ if $mounts_dcorch_engine.volumeMounts }}{{ toYaml $mounts_dcorch_engine.volumeMounts | indent 12 }}{{ end }}
+          command:
+            - /tmp/dcorch-engine.sh
+          image: "{{ .Values.images.tags.dcorch }}"
+          imagePullPolicy: {{ .Values.images.pullPolicy }}
+{{ tuple $envAll "dcorch" | include "helm-toolkit.snippets.kubernetes_image_pull_secrets" | indent 6 }}
+      nodeSelector:
+        {{ .Values.labels.dcorch.node_selector_key }}: {{ .Values.labels.dcorch.node_selector_value }}
+{{ if $envAll.Values.pod.tolerations.dcorch.enabled }}
+{{ tuple $envAll "dcorch" | include "helm-toolkit.snippets.kubernetes_tolerations" | indent 6 }}
+{{ end }}
+      affinity:
+        {{ tuple $envAll "dcorch" "engine" | include "helm-toolkit.snippets.kubernetes_pod_anti_affinity" | indent 8 }}
+      volumes:
+        - name: dcorch-etc
+          secret:
+            secretName: dcorch-etc
+            defaultMode: 0644
+        - name: dcorch-bin
+          configMap:
+            name: dcorch-bin
+            defaultMode: 0755
+{{- if .Values.secrets.caCertSecret }}
+        - name: ca-certs
+          secret:
+            secretName: {{ .Values.secrets.caCertSecret }}
+            defaultMode: 0644
+{{- end }}
+{{ if $mounts_dcorch_engine.volumes }}{{ toYaml $mounts_dcorch_engine.volumes | indent 8 }}{{ end }}
+{{- end }}

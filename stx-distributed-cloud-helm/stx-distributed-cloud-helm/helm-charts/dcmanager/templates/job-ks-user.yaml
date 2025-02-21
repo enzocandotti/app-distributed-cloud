@@ -1,0 +1,16 @@
+{{/*
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+*/}}
+
+{{- if .Values.manifests.job_ks_user }}
+{{- $ksUserJob := dict "envAll" . "serviceName" "dcmanager" -}}
+{{- if .Values.pod.tolerations.dcmanager.enabled -}}
+{{- $_ := set $ksUserJob "tolerationsEnabled" true -}}
+{{- end -}}
+{{- if .Values.manifests.certificates -}}
+{{- $_ := set $ksUserJob "tlsSecret" .Values.secrets.tls.dcmanager.api.public -}}
+{{- end -}}
+{{ $ksUserJob | include "helm-toolkit.manifests.job_ks_user" }}
+{{- end }}

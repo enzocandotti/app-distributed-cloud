@@ -1,0 +1,57 @@
+{{- $envAll := . }}
+
+{{- if .Values.manifests.service_identity_api }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ tuple "dcorch-identity-api" "internal" $envAll | include "helm-toolkit.endpoints.hostname_short_endpoint_lookup" }}
+spec:
+  ports:
+  - name: identity-port
+    port: {{ .Values.network.identity.port }}
+  selector:
+{{ tuple $envAll "dcorch" "identity-api-proxy" | include "helm-toolkit.snippets.kubernetes_metadata_labels" | indent 4 }}
+{{- end }}
+
+{{- if .Values.manifests.service_patching_api }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ tuple "dcorch-patching-api" "internal" $envAll | include "helm-toolkit.endpoints.hostname_short_endpoint_lookup" }}
+spec:
+  ports:
+  - name: patching-port
+    port: {{ .Values.network.patching.port }}
+  selector:
+{{ tuple $envAll "dcorch" "patch-patch-api" | include "helm-toolkit.snippets.kubernetes_metadata_labels" | indent 4 }}
+{{- end }}
+
+{{- if .Values.manifests.service_platform_api }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ tuple "dcorch-platform-api" "internal" $envAll | include "helm-toolkit.endpoints.hostname_short_endpoint_lookup" }}
+spec:
+  ports:
+  - name: platform-port
+    port: {{ .Values.network.platform.port }}
+  selector:
+{{ tuple $envAll "dcorch" "sysinv-api-proxy" | include "helm-toolkit.snippets.kubernetes_metadata_labels" | indent 4 }}
+{{- end }}
+
+{{- if .Values.manifests.service_usm_api }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ tuple "dcorch-usm-api" "internal" $envAll | include "helm-toolkit.endpoints.hostname_short_endpoint_lookup" }}
+spec:
+  ports:
+  - name: usm-port
+    port: {{ .Values.network.usm.port }}
+  selector:
+{{ tuple $envAll "dcorch" "usm-api-proxy" | include "helm-toolkit.snippets.kubernetes_metadata_labels" | indent 4 }}
+{{- end }}

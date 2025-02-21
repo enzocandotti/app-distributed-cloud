@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.nginx.configMapName }}
+  namespace: {{ .Release.Namespace }}
+data:
+  nginx.conf: |
+    events {
+      worker_connections {{ .Values.nginx.worker_connections | default 1024 }};
+    }
+    http {
+      server {
+        listen {{ .Values.nginx.port }};
+        server_name {{ include "dc-vault-nginx.serverNames" . }};
+
+        autoindex {{ .Values.nginx.autoindex | default "on" }};
+        autoindex_exact_size {{ .Values.nginx.autoindex_exact_size | default "off" }};
+        autoindex_localtime {{ .Values.nginx.autoindex_localtime | default "on" }};
+
+        root {{ .Values.volume.vault.path | default "/opt/dc-vault" }};
+
+        location / {
+          root {{ .Values.volume.vault.path | default "/opt/dc-vault" }};
+          try_files $uri $uri/ =404;
+        }
+      }
+    }

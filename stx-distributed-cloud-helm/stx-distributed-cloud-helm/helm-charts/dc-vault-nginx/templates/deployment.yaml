@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.nginx.name }}
+  namespace: {{ .Values.namespace }}
+spec:
+  replicas: {{ .Values.nginx.replicas }}
+  selector:
+    matchLabels:
+      app: {{ .Values.nginx.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.nginx.name }}
+    spec:
+      nodeSelector:
+        {{ .Values.nginx.node_selector_key }}: {{ .Values.nginx.node_selector_value }}
+      containers:
+        - name: nginx
+          image: {{ .Values.nginx.image }}
+          ports:
+            - containerPort: {{ .Values.nginx.port }}
+          volumeMounts:
+            - name: {{ .Values.volume.vault.name }}
+              mountPath: {{ .Values.volume.vault.path }}
+            - name: {{ .Values.volume.backup.name }}
+              mountPath: {{ .Values.volume.backup.path }}
+            - name: {{ .Values.volume.platform.name }}
+              mountPath: {{ .Values.volume.platform.path }}
+            - name: nginx-config
+              mountPath: /etc/nginx/nginx.conf
+              subPath: nginx.conf
+      volumes:
+        {{- if .Values.volume.vault.enabled }}
+        - name: {{ .Values.volume.vault.name }}
+          persistentVolumeClaim:
+            claimName: {{ .Values.volume.vault.claimName }}
+        {{- else }}
+        - name: {{ .Values.volume.vault.name }}
+          hostPath:
+            path: {{ .Values.conf.vault.base_path }}
+            type: DirectoryOrCreate
+        {{- end }}
+        {{- if .Values.volume.backup.enabled }}
+        - name: {{ .Values.volume.backup.name }}
+          persistentVolumeClaim:
+            claimName: {{ .Values.volume.backup.claimName }}
+        {{- else }}
+        - name: {{ .Values.volume.backup.name }}
+          hostPath:
+            path: {{ .Values.conf.backup.base_path }}
+            type: DirectoryOrCreate
+        {{- end }}
+        {{- if .Values.volume.platform.enabled }}
+        - name: {{ .Values.volume.platform.name }}
+          persistentVolumeClaim:
+            claimName: {{ .Values.volume.platform.claimName }}
+        {{- end }}
+        - name: nginx-config
+          configMap:
+            name: {{ .Values.nginx.configMapName }}

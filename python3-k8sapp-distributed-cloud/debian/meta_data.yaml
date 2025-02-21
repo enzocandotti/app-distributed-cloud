@@ -1,0 +1,6 @@
+---
+debname: python3-k8sapp-distributed-cloud
+debver: 1.0-0
+src_path: k8sapp_distributed_cloud
+revision:
+  dist: $STX_DIST
