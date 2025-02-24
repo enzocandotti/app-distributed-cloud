@@ -166,7 +166,7 @@ DCMANAGER_KS_PASSWORD=$(keyring get dcmanager services)
 DCORCH_DB_PASSWORD=$(keyring get dcorch database)
 DCORCH_KS_PASSWORD=$(keyring get dcorch services)
 
-DOCKER_IMAGE=registry.local:9001/docker.io/starlingx/stx-distributed-cloud:master-debian-stable-latest3
+DOCKER_IMAGE=registry.local:9001/docker.io/starlingx/stx-distributed-cloud:master-debian-stable-latest
 
 ADMIN_KS_PASSWORD=$(keyring get CGCS admin)
 RABBITMQ_PASSWORD=$(keyring get amqp rabbit)
