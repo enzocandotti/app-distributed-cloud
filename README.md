@@ -445,7 +445,7 @@ endpoints:
     scheme:
       default: 'http'
     port:
-      dcorch_api:
+      api:
         default: 8118
         public: 80
 EOF
