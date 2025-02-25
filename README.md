@@ -152,22 +152,16 @@ sudo docker login registry.local:9001
 sudo docker image pull ${DOCKER_ADMIN_IMAGE}
 sudo docker image tag ${DOCKER_ADMIN_IMAGE} ${DOCKER_IMAGE}
 sudo docker image push ${DOCKER_IMAGE}
+
+
+system application-upload /usr/local/share/applications/helm/distributed-cloud-24.09-0.tgz
 ```
 
 ```bash
-system application-upload /usr/local/share/applications/helm/distributed-cloud-24.09-0.tgz
-
-# Set Password Variables
-
-ADMIN_KS_PASSWORD=$(keyring get CGCS admin)
-RABBITMQ_PASSWORD=$(keyring get amqp rabbit)
-DCMANAGER_DB_PASSWORD=$(keyring get dcmanager database)
-DCMANAGER_KS_PASSWORD=$(keyring get dcmanager services)
-DCORCH_DB_PASSWORD=$(keyring get dcorch database)
-DCORCH_KS_PASSWORD=$(keyring get dcorch services)
 
 DOCKER_IMAGE=registry.local:9001/docker.io/starlingx/stx-distributed-cloud:master-debian-stable-latest
 
+# Set Password Variables
 ADMIN_KS_PASSWORD=$(keyring get CGCS admin)
 RABBITMQ_PASSWORD=$(keyring get amqp rabbit)
 DCMANAGER_DB_PASSWORD=$(keyring get dcmanager database)
