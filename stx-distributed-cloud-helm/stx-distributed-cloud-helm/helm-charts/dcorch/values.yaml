@@ -36,7 +36,6 @@ labels:
     node_selector_key: starlingx.io/distributed-cloud
     node_selector_value: enabled
 
-imagePullSecrets: []
 
 serviceAccount:
   # Specifies whether a service account should be created
@@ -69,6 +68,7 @@ manifests:
   deployment_api: true
   deployment_engine: true
   deployment_api_proxy: true
+  job_ks_endpoints_identity: true
   ingress: true
   job_ks_user: true
   job_ks_service: true
@@ -82,15 +82,15 @@ manifests:
   secret_ingress_tls: false
   secret_rabbitmq: true
   secret_keystone: true
-  service_identity_api: true
-  service_patching_api: true
+  service_keystone_api: true
+  service_patching_api: false
   service_ingress: true
-  service_platform_api: true
-  service_usm_api: true
+  service_platform_api: false
+  service_usm_api: false
   pvc_vault: true
 
 network:
-  identity:
+  keystone_api_proxy:
     ingress:
       public: true
       classes:
@@ -102,8 +102,8 @@ network:
     external_policy_local: false
     node_port:
       enabled: false
-      port: ""
-  patching:
+      port: 25000
+  dcorch_patching_api:
     ingress:
       public: true
       classes:
@@ -116,7 +116,7 @@ network:
     node_port:
       enabled: false
       port: ""
-  platform:
+  dcorch_platform_api:
     ingress:
       public: true
       classes:
@@ -129,7 +129,7 @@ network:
     node_port:
       enabled: false
       port: ""
-  usm:
+  dcorch_usm_api:
     ingress:
       public: true
       classes:
@@ -172,13 +172,11 @@ conf:
       DEBUG: True
       use_syslog: True
       syslog_log_facility: local4
-      # transport_url: "rabbit://guest:u6HoNk==X3F80_Sf@[fdff:719a:bf60:1152::2]:5672"
       verbose: false
       api_paste_config: /etc/dcorch/api-paste.ini
       auth_strategy: keystone
 
     database:
-      # connection: "postgresql+psycopg2://admin-dcorch:jnjY!FrX9+7kIGSd@[fdff:719a:bf60:1152::2]/dcorch"
       connection_recycle_time: 3600
       max_pool_size: 125
       max_overflow: 75
@@ -195,46 +193,25 @@ conf:
       user_domain_name: Default
       project_domain_name: Default
 
-    # compute:
-    #   bind_host: controller.internal
-      # bind_port: 28774
-    #   remote_host: controller.internal
-    #   remote_port: 18774
-
     platform:
-    #   bind_host: controller.internal
       bind_port: 26385
-    #   remote_host: controller.internal
+      remote_host: controller.internal
       remote_port: 6385
 
-    # volume:
-    #   bind_host: controller.internal
-      # bind_port: 28776
-    #   remote_host: controller.internal
-    #   remote_port: 8776
-
-    # network:
-    #   bind_host: controller.internal
-    #   bind_port: 29696
-    #   remote_host: controller.internal
-    #   remote_port: 9696
-
     patching:
-    #   bind_host: controller.internal
       bind_port: 25491
-    #   remote_host: 0.0.0.0
+      # remote_host: 0.0.0.0
+      remote_host: controller.internal
       remote_port: 5491
 
     usm:
-    #   bind_host: controller.internal
       bind_port: 25497
-    #   remote_host: controller.internal
+      remote_host: controller.internal
       remote_port: 5497
 
     identity:
-    #   bind_host: controller.internal
       bind_port: 25000
-    #   remote_host: controller.internal
+      remote_host: controller.internal
       remote_port: 5000
 
     cache:
@@ -281,8 +258,10 @@ conf:
         - stdout
       qualname: dcorch
     logger_eventletwsgi:
-      level: WARNING
-      handlers: stderr
+      level: INFO
+      handlers:
+        - stdout
+        - stderr
       qualname: eventlet.wsgi.server
     logger_keystoneauth:
       level: ERROR
@@ -457,32 +436,37 @@ endpoints:
         default: 8118
         public: 80
 
-  dcorch_identity_api:
+  keystone_api_proxy:
+    name: keystone-api-proxy
+    region_name: SystemController
     hosts:
-      default: dcorch-identity-api
-      public: dcorch
-    host_fqdn_override:
-      default: null
+      default: keystone-api-proxy
+      public: keystone-api-proxy
+      internal: keystone-api-proxy
     path:
       default: /v3
+    host_fqdn_override:
+      default: null
     scheme:
       default: 'http'
     port:
       api:
         default: 25000
+        public: 80
+
   dcorch_patching_api:
-    hosts:
-      default: dcorch-patching-api
-      public: dcorch
-    host_fqdn_override:
-      default: null
-    path:
-      default: ""
-    scheme:
-      default: 'http'
-    port:
-      api:
-        default: 25491
+      hosts:
+        default: dcorch-patch-api
+        public: dcorch
+      host_fqdn_override:
+        default: null
+      path:
+        default: ""
+      scheme:
+        default: 'http'
+      port:
+        api:
+          default: 25491
   dcorch_platform_api:
     hosts:
       default: dcorch-platform-api
@@ -547,9 +531,9 @@ pod:
     engine:
       init_container: null
       dcorch:
-    proxy:
+    keystone_api_proxy:
       init_container: null
-      dcorch:
+      keystone_api_proxy:
   autoscaling:
     enabled: false
   replicas:
@@ -557,7 +541,7 @@ pod:
     dcorch_engine: 1
     dcorch_engine_worker: 7
     dcorch_sysinv_api_proxy: 3
-    dcorch_identity_api_proxy: 3
+    keystone_api_proxy: 3
     dcorch_patch_api_proxy: 3
     dcorch_usm_api_proxy: 3
   lifecycle:
@@ -610,7 +594,7 @@ pod:
       limits:
         memory: "1024Mi"
         cpu: "2000m"
-    dcorch_identity_api_proxy:
+    keystone_api_proxy:
       requests:
         memory: "128Mi"
         cpu: "100m"
@@ -686,3 +670,7 @@ secrets:
       api:
         public: dcorch-api-tls-public
         internal: dcorch-api-tls-internal
+    keystone_api_proxy:
+      api:
+        public: keystone-api-proxy-tls-public
+

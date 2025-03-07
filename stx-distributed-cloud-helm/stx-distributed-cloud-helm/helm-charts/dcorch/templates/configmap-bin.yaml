@@ -15,8 +15,8 @@ data:
 {{ tuple "bin/_dcorch-engine-worker.sh.tpl" . | include "helm-toolkit.utils.template" | indent 4 }}
   dcorch-engine.sh: |
 {{ tuple "bin/_dcorch-engine.sh.tpl" . | include "helm-toolkit.utils.template" | indent 4 }}
-  dcorch-identity-api-proxy.sh: |
-{{ tuple "bin/_dcorch-identity-api-proxy.sh.tpl" . | include "helm-toolkit.utils.template" | indent 4 }}
+  keystone-api-proxy.sh: |
+{{ tuple "bin/_keystone-api-proxy.sh.tpl" . | include "helm-toolkit.utils.template" | indent 4 }}
   dcorch-sysinv-api-proxy.sh: |
 {{ tuple "bin/_dcorch-sysinv-api-proxy.sh.tpl" . | include "helm-toolkit.utils.template" | indent 4 }}
   dcorch-patch-api-proxy.sh: |
@@ -37,3 +37,5 @@ data:
 {{- include "helm-toolkit.scripts.keystone_endpoints" . | indent 4 }}
   ks-user.sh: |
 {{- include "helm-toolkit.scripts.keystone_user" . | indent 4 }}
+  endpoint-update.sh: |
+{{ tuple "bin/_endpoint-update.sh.tpl" . | include "helm-toolkit.utils.template" | indent 4 }}
