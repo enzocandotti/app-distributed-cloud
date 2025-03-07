@@ -200,8 +200,20 @@ conf:
       state_workers: 1
       audit_workers: 1
       audit_worker_workers: 1
+    cache:
+      auth_uri: http://controller.internal:5000/v3
+      admin_tenant: admin
+      admin_username: admin
+      admin_password: ${ADMIN_KS_PASSWORD}
     endpoint_cache:
+      auth_uri: http://controller.internal:5000/v3
+      auth_plugin: password
+      username: dcmanager
       password: ${DCMANAGER_KS_PASSWORD}
+      project_name: services
+      user_domain_name: Default
+      project_domain_name: Default
+      http_connect_timeout: 15
     database:
       connection_recycle_time: 3600
       max_pool_size: 105
@@ -329,7 +341,7 @@ pod:
   replicas:
     dcorch_engine_worker: 1
     dcorch_sysinv_api_proxy: 1
-    dcorch_identity_api_proxy: 1
+    keystone_api_proxy: 1
     dcorch_patch_api_proxy: 1
     dcorch_usm_api_proxy: 1
 conf:
