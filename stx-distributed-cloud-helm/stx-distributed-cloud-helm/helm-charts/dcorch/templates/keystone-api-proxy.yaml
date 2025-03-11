@@ -9,7 +9,7 @@ tcpSocket:
   port: {{ tuple "keystone_api_proxy" "internal" "api" . | include "helm-toolkit.endpoints.endpoint_port_lookup" }}
 {{- end }}
 
-{{- if .Values.manifests.deployment_api_proxy }}
+{{- if .Values.manifests.ks_deployment_api_proxy }}
 {{- $envAll := . }}
 
 {{- $mounts_keystone_api_proxy := .Values.pod.mounts.keystone_api_proxy.keystone_api_proxy }}
@@ -34,7 +34,7 @@ spec:
 {{ tuple $envAll | include "helm-toolkit.snippets.kubernetes_upgrades_deployment" | indent 2 }}
   template:
     metadata:
-      {{- with .Values.pod.annotations.dcorch_api_proxy }}
+      {{- with .Values.pod.annotations.keystone_api_proxy }}
       annotations:
         {{- toYaml . | nindent 8 }}
       {{- end }}

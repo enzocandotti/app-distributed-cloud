@@ -477,9 +477,11 @@ kubectl create secret generic ceph-pool-kube-rbd --namespace=kube-system
 # Create system-local-ca secret
 ```bash
 
-cp /etc/ssl/certs/dc-adminep-root-ca.pem /home/sysadmin
+cp /etc/ssl/certs/dc-adminep-root-ca.pem /home/sysadmin/root-ca.pem
 
 kubectl -n distributed-cloud create secret generic system-local-ca --from-file=ca.crt=/home/sysadmin/dc-adminep-root-ca.pem
+kubectl -n distributed-cloud create secret generic root-ca --from-file=ca.crt=/home/sysadmin/root-ca.pem
+
 ```
 
 # Apply app-distributed-cloud

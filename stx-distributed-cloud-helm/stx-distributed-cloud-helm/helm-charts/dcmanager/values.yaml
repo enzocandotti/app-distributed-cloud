@@ -248,6 +248,7 @@ manifests:
   service_dcmanager: true
   service_ingress: true
   pvc_vault: true
+  pvc_backup: false
 
 endpoints:
   cluster_domain_suffix: cluster.local

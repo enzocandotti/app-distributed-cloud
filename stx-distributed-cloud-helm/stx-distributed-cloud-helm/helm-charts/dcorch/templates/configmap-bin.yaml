@@ -17,12 +17,12 @@ data:
 {{ tuple "bin/_dcorch-engine.sh.tpl" . | include "helm-toolkit.utils.template" | indent 4 }}
   keystone-api-proxy.sh: |
 {{ tuple "bin/_keystone-api-proxy.sh.tpl" . | include "helm-toolkit.utils.template" | indent 4 }}
-  dcorch-sysinv-api-proxy.sh: |
-{{ tuple "bin/_dcorch-sysinv-api-proxy.sh.tpl" . | include "helm-toolkit.utils.template" | indent 4 }}
-  dcorch-patch-api-proxy.sh: |
-{{ tuple "bin/_dcorch-patch-api-proxy.sh.tpl" . | include "helm-toolkit.utils.template" | indent 4 }}
-  dcorch-usm-api-proxy.sh: |
-{{ tuple "bin/_dcorch-usm-api-proxy.sh.tpl" . | include "helm-toolkit.utils.template" | indent 4 }}
+  sysinv-api-proxy.sh: |
+{{ tuple "bin/_sysinv-api-proxy.sh.tpl" . | include "helm-toolkit.utils.template" | indent 4 }}
+  patching-api-proxy.sh: |
+{{ tuple "bin/_patching-api-proxy.sh.tpl" . | include "helm-toolkit.utils.template" | indent 4 }}
+  usm-api-proxy.sh: |
+{{ tuple "bin/_usm-api-proxy.sh.tpl" . | include "helm-toolkit.utils.template" | indent 4 }}
   db-init.py: |
 {{- include "helm-toolkit.scripts.db_init" . | indent 4 }}
   db-sync.sh: |

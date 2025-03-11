@@ -5,12 +5,7 @@
 */}}
 
 {{- if .Values.manifests.job_ks_endpoints }}
+{{- $_ := set .Values.images "pull_policy" (.Values.images.pullPolicy | default "IfNotPresent") }}
 {{- $ksServiceJob := dict "envAll" . "serviceName" "dcorch" "serviceTypes" ( tuple "dcorch" ) -}}
-{{- if .Values.manifests.certificates -}}
-{{- $_ := set $ksServiceJob "tlsSecret" .Values.secrets.tls.dcorch.api.public -}}
-{{- end -}}
-{{- if .Values.pod.tolerations.dcorch.enabled -}}
-{{- $_ := set $ksServiceJob "tolerationsEnabled" true -}}
-{{- end -}}
-{{ $ksServiceJob | include "helm-toolkit.manifests.job_ks_endpoints" }}
+{{- include "helm-toolkit.manifests.job_ks_endpoints" $ksServiceJob }}
 {{- end }}

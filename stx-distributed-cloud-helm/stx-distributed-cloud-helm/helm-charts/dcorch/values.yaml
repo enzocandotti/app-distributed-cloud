@@ -36,6 +36,9 @@ labels:
     node_selector_key: starlingx.io/distributed-cloud
     node_selector_value: enabled
 
+imagePullSecrets:
+  - name: default-registry-key
+
 
 serviceAccount:
   # Specifies whether a service account should be created
@@ -67,8 +70,14 @@ manifests:
   configmap_bin: true
   deployment_api: true
   deployment_engine: true
-  deployment_api_proxy: true
+  ks_deployment_api_proxy: true
+  job_ks_endpoints_sysinv: true
   job_ks_endpoints_identity: true
+  job_ks_endpoints_patching: true
+  job_ks_endpoints_usm: true
+  sysinv_deployment_api_proxy: true
+  patching_deployment_api_proxy: true
+  usm_deployment_api_proxy: true
   ingress: true
   job_ks_user: true
   job_ks_service: true
@@ -83,11 +92,12 @@ manifests:
   secret_rabbitmq: true
   secret_keystone: true
   service_keystone_api: true
-  service_patching_api: false
+  service_patching_api: true
+  service_sysinv_api: true
+  service_usm_api: true
   service_ingress: true
-  service_platform_api: false
-  service_usm_api: false
   pvc_vault: true
+  pvc_backup: false
 
 network:
   keystone_api_proxy:
@@ -103,7 +113,8 @@ network:
     node_port:
       enabled: false
       port: 25000
-  dcorch_patching_api:
+
+  patching_api_proxy:
     ingress:
       public: true
       classes:
@@ -115,8 +126,9 @@ network:
     external_policy_local: false
     node_port:
       enabled: false
-      port: ""
-  dcorch_platform_api:
+      port: 25491
+
+  sysinv_api_proxy:
     ingress:
       public: true
       classes:
@@ -128,8 +140,9 @@ network:
     external_policy_local: false
     node_port:
       enabled: false
-      port: ""
-  dcorch_usm_api:
+      port: 26385
+
+  usm_api_proxy:
     ingress:
       public: true
       classes:
@@ -141,7 +154,7 @@ network:
     external_policy_local: false
     node_port:
       enabled: false
-      port: ""
+      port: 25497
 
 ingress:
   enabled: false
@@ -175,7 +188,10 @@ conf:
       verbose: false
       api_paste_config: /etc/dcorch/api-paste.ini
       auth_strategy: keystone
-
+    vault:
+      base_path: /opt/dc-vault
+    backup:
+      base_path: /opt/dc-vault/backups
     database:
       connection_recycle_time: 3600
       max_pool_size: 125
@@ -200,7 +216,6 @@ conf:
 
     patching:
       bind_port: 25491
-      # remote_host: 0.0.0.0
       remote_host: controller.internal
       remote_port: 5491
 
@@ -218,7 +233,6 @@ conf:
       auth_uri: http://controller.internal:5000/v3
       admin_tenant: admin
       admin_username: admin
-      # admin_password: "Li69nux*1234"
 
     endpoint_cache:
       auth_uri: http://controller.internal:5000/v3
@@ -229,11 +243,6 @@ conf:
       http_connect_timeout: 15
       username: dcmanager
       region_name: RegionOne
-
-    vault:
-      base_path: /opt/dc-vault
-    backup:
-      base_path: /opt/dc-vault/backups
 
   logging:
     loggers:
@@ -321,6 +330,10 @@ dependencies:
       jobs:
         - dcorch-ks-user
         - dcorch-ks-service
+    ks_endpoints_identity:
+    ks_endpoints_sysinv:
+    ks_endpoints_patching:
+    ks_endpoints_usm:
     db_drop:
       # services:
       #  - endpoint: internal
@@ -420,8 +433,10 @@ endpoints:
       api:
         default: 80
         internal: 5000
+
   dcorch:
     name: dcorch
+    region_name: RegionOne
     hosts:
       default: dcorch-api
       public: dcorch
@@ -454,23 +469,30 @@ endpoints:
         default: 25000
         public: 80
 
-  dcorch_patching_api:
-      hosts:
-        default: dcorch-patch-api
-        public: dcorch
-      host_fqdn_override:
-        default: null
-      path:
-        default: ""
-      scheme:
-        default: 'http'
-      port:
-        api:
-          default: 25491
-  dcorch_platform_api:
+  patching_api_proxy:
+    name: patching-api-proxy
+    region_name: SystemController
     hosts:
-      default: dcorch-platform-api
-      public: dcorch
+      default: patching-api-proxy
+      public: patching-api-proxy
+      internal: patching-api-proxy
+    host_fqdn_override:
+      default: null
+    path:
+      default: ""
+    scheme:
+      default: 'http'
+    port:
+      api:
+        default: 25491
+
+  sysinv_api_proxy:
+    name: sysinv-api-proxy
+    region_name: SystemController
+    hosts:
+      default: sysinv-api-proxy
+      public: sysinv-api-proxy
+      internal: sysinv-api-proxy
     host_fqdn_override:
       default: null
     path:
@@ -480,10 +502,14 @@ endpoints:
     port:
       api:
         default: 26385
-  dcorch_usm_api:
+
+  usm_api_proxy:
+    name: usm-api-proxy
+    region_name: SystemController
     hosts:
-      default: dcorch-usm-api
-      public: dcorch
+      default: usm-api-proxy
+      public: usm-api-proxy
+      internal: usm-api-proxy
     host_fqdn_override:
       default: null
     path:
@@ -534,16 +560,25 @@ pod:
     keystone_api_proxy:
       init_container: null
       keystone_api_proxy:
+    sysinv_api_proxy:
+      init_container: null
+      sysinv_api_proxy:
+    patching_api_proxy:
+      init_container: null
+      patching_api_proxy:
+    usm_api_proxy:
+      init_container: null
+      usm_api_proxy:
   autoscaling:
     enabled: false
   replicas:
     api: 1
     dcorch_engine: 1
     dcorch_engine_worker: 7
-    dcorch_sysinv_api_proxy: 3
-    keystone_api_proxy: 3
-    dcorch_patch_api_proxy: 3
-    dcorch_usm_api_proxy: 3
+    keystone_api_proxy: 1
+    sysinv_api_proxy: 1
+    patching_api_proxy: 1
+    usm_api_proxy: 1
   lifecycle:
     upgrades:
       deployments:
@@ -587,7 +622,7 @@ pod:
       limits:
         memory: "1024Mi"
         cpu: "2000m"
-    dcorch_sysinv_api_proxy:
+    sysinv_api_proxy:
       requests:
         memory: "128Mi"
         cpu: "100m"
@@ -601,14 +636,14 @@ pod:
       limits:
         memory: "1024Mi"
         cpu: "2000m"
-    dcorch_patch_api_proxy:
+    patching_api_proxy:
       requests:
         memory: "128Mi"
         cpu: "100m"
       limits:
         memory: "1024Mi"
         cpu: "2000m"
-    dcorch_usm_api_proxy:
+    usm_api_proxy:
       requests:
         memory: "128Mi"
         cpu: "100m"
@@ -673,4 +708,13 @@ secrets:
     keystone_api_proxy:
       api:
         public: keystone-api-proxy-tls-public
+    sysinv_api_proxy:
+      api:
+        public: sysinv-api-proxy-tls-public
+    patching_api_proxy:
+      api:
+        public: patching-api-proxy-tls-public
+    usm_api_proxy:
+      api:
+        public: usm-api-proxy-tls-public
 

@@ -19,3 +19,63 @@ spec:
   externalTrafficPolicy: Local
   {{ end }}
 {{- end }}
+
+{{- if .Values.manifests.service_sysinv_api }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ tuple "sysinv-api-proxy" "internal" $envAll | include "helm-toolkit.endpoints.hostname_short_endpoint_lookup" }}
+spec:
+  ports:
+  - name: sysinv-api-proxy
+    port: {{ .Values.network.sysinv_api_proxy.port }}
+    {{ if .Values.network.sysinv_api_proxy.node_port.enabled }}
+    nodePort: {{ .Values.network.sysinv_api_proxy.node_port.port }}
+    {{ end }}
+  selector:
+{{ tuple $envAll "dcorch" "sysinv-api-proxy" | include "helm-toolkit.snippets.kubernetes_metadata_labels" | indent 4 }}
+  {{ if .Values.network.sysinv_api_proxy.external_policy_local }}
+  externalTrafficPolicy: Local
+  {{ end }}
+{{- end }}
+
+{{- if .Values.manifests.service_patching_api }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ tuple "patching-api-proxy" "internal" . | include "helm-toolkit.endpoints.hostname_short_endpoint_lookup" }}
+spec:
+  ports:
+  - name: patching-api-proxy
+    port: {{ .Values.network.patching_api_proxy.port }}
+    {{ if .Values.network.patching_api_proxy.node_port.enabled }}
+    nodePort: {{ .Values.network.patching_api_proxy.node_port.port }}
+    {{ end }}
+  selector:
+{{ tuple . "dcorch" "patching-api-proxy" | include "helm-toolkit.snippets.kubernetes_metadata_labels" | indent 4 }}
+  {{ if .Values.network.patching_api_proxy.external_policy_local }}
+  externalTrafficPolicy: Local
+  {{ end }}
+{{- end }}
+
+{{- if .Values.manifests.service_usm_api }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ tuple "usm-api-proxy" "internal" . | include "helm-toolkit.endpoints.hostname_short_endpoint_lookup" }}
+spec:
+  ports:
+  - name: usm-api-proxy
+    port: {{ .Values.network.usm_api_proxy.port }}
+    {{ if .Values.network.usm_api_proxy.node_port.enabled }}
+    nodePort: {{ .Values.network.usm_api_proxy.node_port.port }}
+    {{ end }}
+  selector:
+{{ tuple . "dcorch" "usm-api-proxy" | include "helm-toolkit.snippets.kubernetes_metadata_labels" | indent 4 }}
+  {{ if .Values.network.usm_api_proxy.external_policy_local }}
+  externalTrafficPolicy: Local
+  {{ end }}
+{{- end }}
