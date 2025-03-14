@@ -1,0 +1,162 @@
+
+
+# dcmanager subcloud add --bootstrap-address 192.169.1.2 --bootstrap-values ~/dc-config/bootstrap-values-1.yml --sysadmin-password Li69nux*1234
+
+dcmanager manager:
+2025-03-12 14:09:15,000.000 940 INFO dcmanager.manager.service [-] Handling add_subcloud request for: subcloud1
+2025-03-12 14:09:15,000.000 940 INFO dcmanager.manager.subcloud_manager [-] Adding subcloud subcloud1 with region b5bcf7f99ab543ec853fa3bc2e98be3b.
+2025-03-12 14:09:15,000.000 940 INFO dcmanager.manager.subcloud_manager [-] Creating subcloud subcloud1.
+2025-03-12 14:09:19,180.180 940 ERROR dcmanager.manager.subcloud_manager [-] Failed to create subcloud subcloud1: FileNotFoundError: [Errno 2] No such file or directory: '/opt/platform/config/TEST.SW.VERSION/dnsmasq.addn_hosts_dc.temp'
+2025-03-12 14:09:19,180.180 940 ERROR dcmanager.manager.subcloud_manager Traceback (most recent call last):
+2025-03-12 14:09:19,180.180 940 ERROR dcmanager.manager.subcloud_manager   File "/var/lib/openstack/lib/python3.9/site-packages/dcmanager/manager/subcloud_manager.py", line 1720, in subcloud_deploy_create
+2025-03-12 14:09:19,180.180 940 ERROR dcmanager.manager.subcloud_manager     self._create_addn_hosts_dc(context)
+2025-03-12 14:09:19,180.180 940 ERROR dcmanager.manager.subcloud_manager   File "/var/lib/openstack/lib/python3.9/site-packages/dcmanager/manager/subcloud_manager.py", line 3042, in _create_addn_hosts_dc
+2025-03-12 14:09:19,180.180 940 ERROR dcmanager.manager.subcloud_manager     with open(addn_hosts_dc_temp, "w") as f_out_addn_dc_temp:
+2025-03-12 14:09:19,180.180 940 ERROR dcmanager.manager.subcloud_manager FileNotFoundError: [Errno 2] No such file or directory: '/opt/platform/config/TEST.SW.VERSION/dnsmasq.addn_hosts_dc.temp'
+2025-03-12 14:09:19,180.180 940 ERROR dcmanager.manager.subcloud_manager 
+
+dcmanager audit:
+2025-03-12 14:05:41,226.226 7 INFO dcmanager.audit [-] Starting...
+2025-03-12 14:05:41,242.242 7 INFO dcmanager.common.utils [-] Setting process open file limit to 4096 (from 1048576)
+Traceback (most recent call last):
+  File "/var/lib/openstack/lib/python3.9/site-packages/eventlet/hubs/hub.py", line 476, in fire_timers
+    timer()
+  File "/var/lib/openstack/lib/python3.9/site-packages/eventlet/hubs/timer.py", line 59, in __call__
+    cb(*args, **kw)
+  File "/var/lib/openstack/lib/python3.9/site-packages/eventlet/greenthread.py", line 221, in main
+    result = function(*args, **kwargs)
+  File "/var/lib/openstack/lib/python3.9/site-packages/dcmanager/audit/subcloud_audit_manager.py", line 251, in periodic_subcloud_audit
+    self._add_missing_endpoints()
+  File "/var/lib/openstack/lib/python3.9/site-packages/dcmanager/audit/subcloud_audit_manager.py", line 145, in _add_missing_endpoints
+    open(file_path, "w").close()
+FileNotFoundError: [Errno 2] No such file or directory: '/opt/platform/config/TEST.SW.VERSION/.usm_endpoint_added'
+
+fixed mounting /etc/platform/platform.conf and /etc/build.info in manager and audit
+
+////////////////////////////////////////////////////
+dcmanager-manager:
+
+2025-03-13 03:15:29,039.039 939 ERROR dcmanager.manager.subcloud_manager [-] Failed to create subcloud subcloud1: keyring.errors.NoKeyringError: No recommended backend was available. Install a recommended 3rd party backend package; or, install the keyrings.alt package if you want to use the non-recommended backends. See https://pypi.org/project/keyring for details.
+2025-03-13 03:15:29,039.039 939 ERROR dcmanager.manager.subcloud_manager Traceback (most recent call last):
+2025-03-13 03:15:29,039.039 939 ERROR dcmanager.manager.subcloud_manager   File "/var/lib/openstack/lib/python3.9/site-packages/dcmanager/manager/subcloud_manager.py", line 1735, in subcloud_deploy_create
+2025-03-13 03:15:29,039.039 939 ERROR dcmanager.manager.subcloud_manager     keyring.get_password(user, dccommon_consts.SERVICES_USER_NAME)
+2025-03-13 03:15:29,039.039 939 ERROR dcmanager.manager.subcloud_manager   File "/var/lib/openstack/lib/python3.9/site-packages/keyring/core.py", line 55, in get_password
+2025-03-13 03:15:29,039.039 939 ERROR dcmanager.manager.subcloud_manager     return get_keyring().get_password(service_name, username)
+2025-03-13 03:15:29,039.039 939 ERROR dcmanager.manager.subcloud_manager   File "/var/lib/openstack/lib/python3.9/site-packages/keyring/backends/fail.py", line 25, in get_password
+2025-03-13 03:15:29,039.039 939 ERROR dcmanager.manager.subcloud_manager     raise NoKeyringError(msg)
+2025-03-13 03:15:29,039.039 939 ERROR dcmanager.manager.subcloud_manager keyring.errors.NoKeyringError: No recommended backend was available. Install a recommended 3rd party backend package; or, install the keyrings.alt package if you want to use the non-recommended backends. See https://pypi.org/project/keyring for details.
+2025-03-13 03:15:29,039.039 939 ERROR dcmanager.manager.subcloud_manager 
+
+fixing with keyring version and installing keyrings.alt
+
+
+////////////////////////////////////////////////////
+
+2025-03-13 04:48:19,379.379 940 INFO dcmanager.manager.service [-] Handling add_subcloud request for: subcloud1
+2025-03-13 04:48:19,380.380 940 INFO dcmanager.manager.subcloud_manager [-] Adding subcloud subcloud1 with region ead0756902f5428ca3fe017e54fa8856.
+2025-03-13 04:48:19,382.382 940 INFO dcmanager.manager.subcloud_manager [-] Creating subcloud subcloud1.
+2025-03-13 04:48:25,276.276 940 ERROR dcmanager.manager.subcloud_manager [-] Failed to create subcloud subcloud1: kubernetes.config.config_exception.ConfigException: Invalid kube-config file. No configuration found.
+2025-03-13 04:48:25,276.276 940 ERROR dcmanager.manager.subcloud_manager Traceback (most recent call last):
+2025-03-13 04:48:25,276.276 940 ERROR dcmanager.manager.subcloud_manager   File "/var/lib/openstack/lib/python3.9/site-packages/dcmanager/manager/subcloud_manager.py", line 1767, in subcloud_deploy_create
+2025-03-13 04:48:25,276.276 940 ERROR dcmanager.manager.subcloud_manager     self._create_intermediate_ca_cert(payload)
+2025-03-13 04:48:25,276.276 940 ERROR dcmanager.manager.subcloud_manager   File "/var/lib/openstack/lib/python3.9/site-packages/dcmanager/manager/subcloud_manager.py", line 261, in _create_intermediate_ca_cert
+2025-03-13 04:48:25,276.276 940 ERROR dcmanager.manager.subcloud_manager     kube.apply_cert_manager_certificate(CERT_NAMESPACE, cert_name, cert)
+2025-03-13 04:48:25,276.276 940 ERROR dcmanager.manager.subcloud_manager   File "/var/lib/openstack/lib/python3.9/site-packages/dccommon/kubeoperator.py", line 119, in apply_cert_manager_certificate
+2025-03-13 04:48:25,276.276 940 ERROR dcmanager.manager.subcloud_manager     custom_object_api = self._get_kubernetesclient_custom_objects()
+2025-03-13 04:48:25,276.276 940 ERROR dcmanager.manager.subcloud_manager   File "/var/lib/openstack/lib/python3.9/site-packages/dccommon/kubeoperator.py", line 55, in _get_kubernetesclient_custom_objects
+2025-03-13 04:48:25,276.276 940 ERROR dcmanager.manager.subcloud_manager     self._load_kube_config()
+2025-03-13 04:48:25,276.276 940 ERROR dcmanager.manager.subcloud_manager   File "/var/lib/openstack/lib/python3.9/site-packages/dccommon/kubeoperator.py", line 32, in _load_kube_config
+2025-03-13 04:48:25,276.276 940 ERROR dcmanager.manager.subcloud_manager     config.load_kube_config(KUBE_CONFIG_PATH)
+2025-03-13 04:48:25,276.276 940 ERROR dcmanager.manager.subcloud_manager   File "/var/lib/openstack/lib/python3.9/site-packages/kubernetes/config/kube_config.py", line 815, in load_kube_config
+2025-03-13 04:48:25,276.276 940 ERROR dcmanager.manager.subcloud_manager     loader = _get_kube_config_loader(
+2025-03-13 04:48:25,276.276 940 ERROR dcmanager.manager.subcloud_manager   File "/var/lib/openstack/lib/python3.9/site-packages/kubernetes/config/kube_config.py", line 772, in _get_kube_config_loader
+2025-03-13 04:48:25,276.276 940 ERROR dcmanager.manager.subcloud_manager     raise ConfigException(
+2025-03-13 04:48:25,276.276 940 ERROR dcmanager.manager.subcloud_manager kubernetes.config.config_exception.ConfigException: Invalid kube-config file. No configuration found.
+2025-03-13 04:48:25,276.276 940 ERROR dcmanager.manager.subcloud_manager 
+
+fixed mounting /etc/kubernetes/admin.conf in manager
+
+////////////////////////////////////////////////////
+
+2025-03-13 04:57:59,495.495 939 ERROR dcmanager.manager.subcloud_manager [-] Failed to bootstrap subcloud subcloud1: dcmanager.common.exceptions.PlaybookNotFound: Playbook /opt/dc-vault/playbooks/TEST.SW.VERSION/bootstrap.yml not found
+2025-03-13 04:57:59,495.495 939 ERROR dcmanager.manager.subcloud_manager Traceback (most recent call last):
+2025-03-13 04:57:59,495.495 939 ERROR dcmanager.manager.subcloud_manager   File "/var/lib/openstack/lib/python3.9/site-packages/dcmanager/manager/subcloud_manager.py", line 2011, in subcloud_deploy_bootstrap
+2025-03-13 04:57:59,495.495 939 ERROR dcmanager.manager.subcloud_manager     bootstrap_command = self._deploy_bootstrap_prep(
+2025-03-13 04:57:59,495.495 939 ERROR dcmanager.manager.subcloud_manager   File "/var/lib/openstack/lib/python3.9/site-packages/dcmanager/manager/subcloud_manager.py", line 1280, in _deploy_bootstrap_prep
+2025-03-13 04:57:59,495.495 939 ERROR dcmanager.manager.subcloud_manager     bootstrap_command = self.compose_bootstrap_command(
+2025-03-13 04:57:59,495.495 939 ERROR dcmanager.manager.subcloud_manager   File "/var/lib/openstack/lib/python3.9/site-packages/dcmanager/manager/subcloud_manager.py", line 411, in compose_bootstrap_command
+2025-03-13 04:57:59,495.495 939 ERROR dcmanager.manager.subcloud_manager     utils.get_playbook_for_software_version(
+2025-03-13 04:57:59,495.495 939 ERROR dcmanager.manager.subcloud_manager   File "/var/lib/openstack/lib/python3.9/site-packages/dcmanager/common/utils.py", line 1628, in get_playbook_for_software_version
+2025-03-13 04:57:59,495.495 939 ERROR dcmanager.manager.subcloud_manager     raise exceptions.PlaybookNotFound(playbook_name=playbook_filename)
+2025-03-13 04:57:59,495.495 939 ERROR dcmanager.manager.subcloud_manager dcmanager.common.exceptions.PlaybookNotFound: Playbook /opt/dc-vault/playbooks/TEST.SW.VERSION/bootstrap.yml not found
+2025-03-13 04:57:59,495.495 939 ERROR dcmanager.manager.subcloud_manager 
+
+fixed mounting /etc/platform/platform.conf and /etc/build.info  in dcmanager-api
+
+////////////////////////////////////////////////////
+manager:
+2025-03-13 07:18:45,111.111 941 ERROR dcmanager.manager.subcloud_manager [ req-bbb9b683-df6f-4531-813f-7e9d68d1211c - - - - - -] Failed to bootstrap subcloud subcloud1: dcmanager.common.exceptions.PlaybookNotFound: Playbook /usr/share/ansible/stx-ansible/playbooks/bootstrap.yml not found
+2025-03-13 07:18:45,111.111 941 ERROR dcmanager.manager.subcloud_manager Traceback (most recent call last):
+2025-03-13 07:18:45,111.111 941 ERROR dcmanager.manager.subcloud_manager   File "/var/lib/openstack/lib/python3.9/site-packages/dcmanager/manager/subcloud_manager.py", line 2011, in subcloud_deploy_bootstrap
+2025-03-13 07:18:45,111.111 941 ERROR dcmanager.manager.subcloud_manager     bootstrap_command = self._deploy_bootstrap_prep(
+2025-03-13 07:18:45,111.111 941 ERROR dcmanager.manager.subcloud_manager   File "/var/lib/openstack/lib/python3.9/site-packages/dcmanager/manager/subcloud_manager.py", line 1280, in _deploy_bootstrap_prep
+2025-03-13 07:18:45,111.111 941 ERROR dcmanager.manager.subcloud_manager     bootstrap_command = self.compose_bootstrap_command(
+2025-03-13 07:18:45,111.111 941 ERROR dcmanager.manager.subcloud_manager   File "/var/lib/openstack/lib/python3.9/site-packages/dcmanager/manager/subcloud_manager.py", line 411, in compose_bootstrap_command
+2025-03-13 07:18:45,111.111 941 ERROR dcmanager.manager.subcloud_manager     utils.get_playbook_for_software_version(
+2025-03-13 07:18:45,111.111 941 ERROR dcmanager.manager.subcloud_manager   File "/var/lib/openstack/lib/python3.9/site-packages/dcmanager/common/utils.py", line 1628, in get_playbook_for_software_version
+2025-03-13 07:18:45,111.111 941 ERROR dcmanager.manager.subcloud_manager     raise exceptions.PlaybookNotFound(playbook_name=playbook_filename)
+2025-03-13 07:18:45,111.111 941 ERROR dcmanager.manager.subcloud_manager dcmanager.common.exceptions.PlaybookNotFound: Playbook /usr/share/ansible/stx-ansible/playbooks/bootstrap.yml not found
+2025-03-13 07:18:45,111.111 941 ERROR dcmanager.manager.subcloud_manager 
+
+fixed installing playbookconfig package in the container
+
+
+////////////////////////////////////////////////////
+
+NOT FIXED YET:
+
+manager:
+
+2025-03-13 07:52:38,689.689 941 ERROR dcmanager.manager.subcloud_manager [-] FAILED bootstrapping playbook of (subcloud1).
+check individual log at /var/log/dcmanager/ansible/subcloud1_playbook_output.log for detailed output: dccommon.exceptions.PlaybookExecutionFailed: Playbook execution failed, command=['ansible-playbook', '/usr/share/ansible/stx-ansible/playbooks/bootstrap.yml', '-i', '/opt/dc-vault/ansible/subcloud1_inventory.yml', '--limit', 'subcloud1', '-e', "override_files_dir='/opt/dc-vault/ansible' region_name=8be12d8905b746c288de8db34fa52170", '-e', 'install_release_version=25.09']
+
+/var/log/dcmanager/ansible/subcloud1_playbook_output.log:
+
+TASK [bootstrap/prepare-env : Check if the files referenced by the remaining overrides exist] ****************************
+Thursday 13 March 2025  07:59:52 +0000 (0:00:00.069)       0:00:08.555 ******** 
+failed: [subcloud1] (item=[0, 'ssl_ca_cert']) => changed=false 
+  ansible_loop_var: cert_override
+  cert_override:
+  - 0
+  - ssl_ca_cert
+  module_stderr: |-
+    /bin/sh: 1: /usr/bin/python: not found
+  module_stdout: ''
+  msg: |-
+    The module failed to execute correctly, you probably need to set the interpreter.
+    See stdout/stderr for the exact error
+  rc: 127
+failed: [subcloud1] (item=[1, 'k8s_root_ca_cert']) => changed=false 
+  ansible_loop_var: cert_override
+  cert_override:
+  - 1
+  - k8s_root_ca_cert
+  module_stderr: |-
+    /bin/sh: 1: /usr/bin/python: not found
+  module_stdout: ''
+  msg: |-
+    The module failed to execute correctly, you probably need to set the interpreter.
+    See stdout/stderr for the exact error
+  rc: 127
+failed: [subcloud1] (item=[2, 'k8s_root_ca_key']) => changed=false 
+  ansible_loop_var: cert_override
+  cert_override:
+  - 2
+  - k8s_root_ca_key
+  module_stderr: |-
+    /bin/sh: 1: /usr/bin/python: not found
+  module_stdout: ''
+  msg: |-
+    The module failed to execute correctly, you probably need to set the interpreter.
+    See stdout/stderr for the exact error
+  rc: 127

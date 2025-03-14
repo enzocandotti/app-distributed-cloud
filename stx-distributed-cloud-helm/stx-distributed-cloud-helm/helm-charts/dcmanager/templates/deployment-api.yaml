@@ -63,6 +63,12 @@ spec:
               mountPath: /etc/dcmanager/logging.conf
               subPath: logging.conf
               readOnly: true
+            - name: buildinfo
+              mountPath: /etc/build.info
+              readOnly: true
+            - name: platformconf
+              mountPath: /etc/platform/platform.conf
+              readOnly: true
             - name: dc-vault-dir
               mountPath: {{ .Values.conf.dcmanager.vault.base_path }}
             - name: dc-backup-dir
@@ -101,6 +107,12 @@ spec:
           configMap:
             name: dcmanager-bin
             defaultMode: 0755
+        - name: buildinfo
+          hostPath:
+            path: /etc/build.info
+        - name: platformconf
+          hostPath:
+            path: /etc/platform/platform.conf
 {{- if .Values.ca_certificates.root_ca }}
         - name: root-ca
           secret:
