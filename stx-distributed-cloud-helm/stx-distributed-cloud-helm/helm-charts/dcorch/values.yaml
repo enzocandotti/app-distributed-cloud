@@ -156,6 +156,9 @@ network:
       enabled: false
       port: 25497
 
+ca_certificates:
+  root_ca: system-local-ca
+
 ingress:
   enabled: false
   annotations: {}
@@ -688,7 +691,6 @@ pod:
           cpu: "2000m"
 
 secrets:
-  caCertSecret: system-local-ca
   identity:
     admin: dcorch-keystone-admin
     dcorch: dcorch-keystone-user

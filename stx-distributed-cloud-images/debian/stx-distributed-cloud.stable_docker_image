@@ -14,6 +14,7 @@ DIST_PACKAGES="
         software-client \
         fm-common \
         python3-gi \
+        python3-keyrings.alt \
         "
 PIP_PACKAGES="
         distributedcloud \
@@ -56,5 +57,6 @@ CUSTOMIZATION="\
     pip3 uninstall -y oslo.context && pip install 'oslo.context<4.0' && \
     pip3 uninstall -y oslo.db && pip install 'oslo.db<9.0' && \
     pip3 uninstall -y keystoneauth1 && \
+    pip3 uninstall -y keyring && \
     pip3 uninstall -y python-keystoneclient \
 "

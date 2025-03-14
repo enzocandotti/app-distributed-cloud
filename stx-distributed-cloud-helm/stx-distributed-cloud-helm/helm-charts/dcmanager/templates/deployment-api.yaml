@@ -48,11 +48,8 @@ spec:
         - name: dcmanager
 {{ tuple $envAll $envAll.Values.pod.resources.api | include "helm-toolkit.snippets.kubernetes_resources" | indent 10 }}
           env:
-          - name: SSL_CERT_FILE
-            value: /etc/ssl/certs/ca-certificates.crt
-          envFrom:
-            - secretRef:
-                name: dcmanager-keystone-admin
+            - name: REQUESTS_CA_BUNDLE
+              value: /etc/ssl/certs/ca-certificates.crt
           volumeMounts:
             - name: dcmanager-bin
               mountPath: /tmp/dcmanager-api.sh
@@ -70,9 +67,9 @@ spec:
               mountPath: {{ .Values.conf.dcmanager.vault.base_path }}
             - name: dc-backup-dir
               mountPath: {{ .Values.conf.dcmanager.backup.base_path }}
-{{- if .Values.secrets.caCertSecret }}
-            - name: ca-certs
-              mountPath: /etc/pki/ca-trust/source/anchors/dcmanager-local-ca.crt
+{{- if .Values.ca_certificates.root_ca }}
+            - name: root-ca
+              mountPath: /usr/local/share/ca-certificates/root-ca.crt
               subPath: ca.crt
               readOnly: true
 {{- end }}
@@ -104,10 +101,10 @@ spec:
           configMap:
             name: dcmanager-bin
             defaultMode: 0755
-{{- if .Values.secrets.caCertSecret }}
-        - name: ca-certs
+{{- if .Values.ca_certificates.root_ca }}
+        - name: root-ca
           secret:
-            secretName: {{ .Values.secrets.caCertSecret }}
+            secretName: {{ .Values.ca_certificates.root_ca }}
             defaultMode: 0644
 {{- end }}
         {{- if and .Values.volume.vault.enabled  .Values.manifests.pvc_vault }}

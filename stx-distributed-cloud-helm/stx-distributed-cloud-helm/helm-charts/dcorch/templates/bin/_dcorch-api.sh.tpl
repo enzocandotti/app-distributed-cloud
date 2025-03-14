@@ -13,9 +13,4 @@ if ! update-ca-certificates --localcertsdir /etc/pki/ca-trust/source/anchors; th
     exit 1
 fi
 
-if ! update-ca-certificates --localcertsdir /etc/pki/ca-trust/source/anchors; then
-    echo "Failed to update CA certificates!" >&2
-    exit 1
-fi
-
 python /var/lib/openstack/bin/dcorch-api --config-file=/etc/dcorch/dcorch.conf

@@ -335,6 +335,9 @@ endpoints:
         default: 8119
         public: 80
 
+ca_certificates:
+  root_ca: system-local-ca
+
 pod:
   probes:
     api:
@@ -492,7 +495,6 @@ pod:
           cpu: "2000m"
 
 secrets:
-  caCertSecret: system-local-ca
   identity:
     admin: dcmanager-keystone-admin
     dcmanager: dcmanager-keystone-user

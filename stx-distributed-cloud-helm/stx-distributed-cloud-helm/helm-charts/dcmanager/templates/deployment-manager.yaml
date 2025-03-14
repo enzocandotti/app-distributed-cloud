@@ -42,9 +42,9 @@ spec:
       containers:
         - name: dcmanager
 {{ tuple $envAll $envAll.Values.pod.resources.manager | include "helm-toolkit.snippets.kubernetes_resources" | indent 10 }}
-          envFrom:
-            - secretRef:
-                name: dcmanager-keystone-admin
+          env:
+            - name: REQUESTS_CA_BUNDLE
+              value: /etc/ssl/certs/ca-certificates.crt
           volumeMounts:
             - name: dcmanager-bin
               mountPath: /tmp/dcmanager-manager.sh
@@ -58,10 +58,27 @@ spec:
               mountPath: /etc/dcmanager/logging.conf
               subPath: logging.conf
               readOnly: true
+            - name: platform-volume
+              mountPath: /opt/platform
+            - name: buildinfo
+              mountPath: /etc/build.info
+              readOnly: true
+            - name: platformconf
+              mountPath: /etc/platform/platform.conf
+              readOnly: true
+            - name: kube-config
+              mountPath: /etc/kubernetes/admin.conf
+              readOnly: true
             - name: dc-vault-dir
               mountPath: {{ .Values.conf.dcmanager.vault.base_path }}
             - name: dc-backup-dir
               mountPath: {{ .Values.conf.dcmanager.backup.base_path }}
+{{- if .Values.ca_certificates.root_ca }}
+            - name: root-ca
+              mountPath: /usr/local/share/ca-certificates/root-ca.crt
+              subPath: ca.crt
+              readOnly: true
+{{- end }}
 {{ if $mounts_dcmanager_manager.volumeMounts }}{{ toYaml $mounts_dcmanager_manager.volumeMounts | indent 12 }}{{ end }}
           command:
             - /tmp/dcmanager-manager.sh
@@ -84,6 +101,25 @@ spec:
           configMap:
             name: dcmanager-bin
             defaultMode: 0755
+        - name: platform-volume
+          hostPath:
+            path: /opt/platform/
+            type: DirectoryOrCreate
+        - name: kube-config
+          hostPath:
+            path: /etc/kubernetes/admin.conf
+        - name: buildinfo
+          hostPath:
+            path: /etc/build.info
+        - name: platformconf
+          hostPath:
+            path: /etc/platform/platform.conf
+{{- if .Values.ca_certificates.root_ca }}
+        - name: root-ca
+          secret:
+            secretName: {{ .Values.ca_certificates.root_ca }}
+            defaultMode: 0644
+{{- end }}
         {{- if and .Values.volume.vault.enabled  .Values.manifests.pvc_vault }}
         - name: dc-vault-dir
           persistentVolumeClaim:

@@ -8,11 +8,9 @@
 
 set -ex
 
-if ! update-ca-certificates --localcertsdir /etc/pki/ca-trust/source/anchors; then
+if ! update-ca-certificates; then
     echo "Failed to update CA certificates!" >&2
     exit 1
 fi
-
-export REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt;
 
 python /var/lib/openstack/bin/dcorch-engine-worker --config-file=/etc/dcorch/dcorch.conf

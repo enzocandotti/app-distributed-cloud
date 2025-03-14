@@ -8,7 +8,7 @@
 
 set -ex
 
-if ! update-ca-certificates --localcertsdir /etc/pki/ca-trust/source/anchors; then
+if ! update-ca-certificates; then
     echo "Failed to update CA certificates!" >&2
     exit 1
 fi

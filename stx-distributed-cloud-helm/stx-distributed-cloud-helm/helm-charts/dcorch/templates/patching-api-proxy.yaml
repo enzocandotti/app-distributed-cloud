@@ -74,9 +74,9 @@ spec:
               mountPath: {{ .Values.conf.dcorch.vault.base_path }}
             - name: dc-backup-dir
               mountPath: {{ .Values.conf.dcorch.backup.base_path }}
-{{- if .Values.secrets.caCertSecret }}
-            - name: ca-certs
-              mountPath: /etc/pki/ca-trust/source/anchors/dcorch-local-ca.crt
+{{- if .Values.ca_certificates.root_ca }}
+            - name: root-ca
+              mountPath: /usr/local/share/ca-certificates/root-ca.crt
               subPath: ca.crt
               readOnly: true
 {{- end }}
@@ -108,10 +108,10 @@ spec:
           configMap:
             name: dcorch-bin
             defaultMode: 0755
-{{- if .Values.secrets.caCertSecret }}
-        - name: ca-certs
+{{- if .Values.ca_certificates.root_ca }}
+        - name: root-ca
           secret:
-            secretName: {{ .Values.secrets.caCertSecret }}
+            secretName: {{ .Values.ca_certificates.root_ca }}
             defaultMode: 0644
 {{- end }}
         {{- if and .Values.volume.vault.enabled  .Values.manifests.pvc_vault }}

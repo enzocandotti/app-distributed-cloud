@@ -61,9 +61,9 @@ spec:
               mountPath: /etc/dcorch/logging.conf
               subPath: logging.conf
               readOnly: true
-{{- if .Values.secrets.caCertSecret }}
-            - name: ca-certs
-              mountPath: /etc/pki/ca-trust/source/anchors/dcorch-local-ca.crt
+{{- if .Values.ca_certificates.root_ca }}
+            - name: root-ca
+              mountPath: /usr/local/share/ca-certificates/root-ca.crt
               subPath: ca.crt
               readOnly: true
 {{- end }}
@@ -89,10 +89,10 @@ spec:
           configMap:
             name: dcorch-bin
             defaultMode: 0755
-{{- if .Values.secrets.caCertSecret }}
-        - name: ca-certs
+{{- if .Values.ca_certificates.root_ca }}
+        - name: root-ca
           secret:
-            secretName: {{ .Values.secrets.caCertSecret }}
+            secretName: {{ .Values.ca_certificates.root_ca }}
             defaultMode: 0644
 {{- end }}
 {{ if $mounts_dcorch_engine.volumes }}{{ toYaml $mounts_dcorch_engine.volumes | indent 8 }}{{ end }}
